@@ -1,6 +1,6 @@
 
 %{
-#include "tokens.h"
+#include "parser.tab.h"
 
 static int line_count = 1;
 %}
@@ -98,4 +98,8 @@ true { return TK_LIT_TRUE; }
 
 int get_line_number() {
     return line_count;
+}
+
+void yyerror (char const *s) {
+    fprintf(stderr, "%s in line %d\n\tat: '%s'", s, get_line_number(), yytext);
 }

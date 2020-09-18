@@ -1,6 +1,11 @@
 %{
-int yylex(void);
-void yyerror (char const *s);
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include "lex.yy.h"
+
+    extern int get_line_number(void);
+    int yylex(void);
+    void yyerror (char const *s);
 %}
 
 %token TK_PR_INT
@@ -49,8 +54,50 @@ void yyerror (char const *s);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 
+/* precedencia da menor pra maior */
+
+%right '='
+
+%left '+' '-'
+%left '*' '/' '%' 
+
+
+%start programa
+
+
+/*
+TODO: Alterar funcionamento do scanner.l para parar de reconhecer + e - na frente dos TK_INT_LIT
+Alterar FLOAT e outras regras que usassem isso
+*/
+
 %%
 
-programa:
+programa: declaracao
+        | programa declaracao ;
+
+declaracao: global
+          | funcao;
+
+static_ou_tipo: TK_PR_STATIC tipo | tipo;
+
+tipo: TK_PR_INT
+    | TK_PR_FLOAT
+    | TK_PR_CHAR
+    | TK_PR_BOOL
+    | TK_PR_STRING ;
+
+ids: ids ',' id
+   | id ;
+
+id: TK_IDENTIFICADOR
+  | TK_IDENTIFICADOR '[' TK_LIT_INT ']' ;
+
+global: static_ou_tipo ids ';' ;
+
+funcao: ;
 
 %%
+
+// void yyerror (char const *s) {
+//     fprintf(stderr, "%s at line %d\n", s, get_line_number());
+// }

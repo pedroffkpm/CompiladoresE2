@@ -7,7 +7,7 @@ ___
 
 - Definir a gramática da linguagem:
     - no arquivo `parser.y`
-    - Declarações de variáveis globais
+    - ~~Declarações de variáveis globais ~~
     - Definição de Funções
     - Bloco de Comandos
     - Comandos Simples:
@@ -20,7 +20,9 @@ ___
         - comandos de controle de fluxo
     - Expressões aritméticas, lógicas:
         - Operadores:
-            - Unários: `+`, `-`, `!`, `&`, `*`, `?`, `#``
+            - Unários: `+`, `-`, `!`, `&`, `*`, `?`, `#`
+                - (modificar etapa 1: TK_INT_LIT não pode mais considerar os sinais)
+                - Alterar também regras como a TK_FLOAT_LIT que usassem isso
             - Binários: `+`, `-`, `*`, `/`, `%`, `|`, `&`, `^`, comparadores relacionais, lógicos (`&&`, `||`)
             - Ternários: `expressão` `?` `expressão` `:` `expressão`
             - Associativos à direita: `&`, `*` (acesso a ponteiros), `#`

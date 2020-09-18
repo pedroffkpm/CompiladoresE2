@@ -50,3 +50,11 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Project files
+parser.output
+lex.yy.c
+parser.tab.c
+parser.tab.h
+etapa2
+lex.yy.h
