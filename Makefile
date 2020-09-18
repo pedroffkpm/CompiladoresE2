@@ -22,4 +22,4 @@ lex.yy.o: parser.y scanner.l
 	$(CC) -c lex.yy.c parser.tab.c
 
 clean:
-	rm -f etapa2 lex.yy.* parser.tab.* *.o
+	rm -f etapa2 lex.yy.* parser.tab.* *.o parser.output

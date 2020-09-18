@@ -78,8 +78,6 @@ programa: declaracao
 declaracao: global
           | funcao;
 
-static_ou_tipo: TK_PR_STATIC tipo | tipo;
-
 tipo: TK_PR_INT
     | TK_PR_FLOAT
     | TK_PR_CHAR
@@ -92,9 +90,29 @@ ids: ids ',' id
 id: TK_IDENTIFICADOR
   | TK_IDENTIFICADOR '[' TK_LIT_INT ']' ;
 
-global: static_ou_tipo ids ';' ;
+global: TK_PR_STATIC tipo ids ';'
+      | tipo ids ';';
 
-funcao: ;
+
+funcao: header bloco;
+
+header: TK_PR_STATIC tipo TK_IDENTIFICADOR '(' params ')'
+      | tipo TK_IDENTIFICADOR '(' params ')'
+      | TK_PR_STATIC tipo TK_IDENTIFICADOR '(' ')'
+      | tipo TK_IDENTIFICADOR '(' ')' ;
+
+params: params ',' param
+      | param ;
+
+param: TK_PR_CONST tipo TK_IDENTIFICADOR
+     | tipo TK_IDENTIFICADOR ;
+
+bloco: '{' comandos '}';
+
+comandos: comando ';' comandos
+        | %empty ;
+
+comando: %empty;
 
 %%
 

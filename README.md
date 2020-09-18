@@ -8,7 +8,7 @@ ___
 - Definir a gramática da linguagem:
     - no arquivo `parser.y`
     - ~~Declarações de variáveis globais ~~
-    - Definição de Funções
+    - ~~Definição de Funções ~~
     - Bloco de Comandos
     - Comandos Simples:
         - declaração de variável
