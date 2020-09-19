@@ -17,9 +17,11 @@ all: lex.yy.o
 	$(CC) $(CCFLAGS) main.c lex.yy.o parser.tab.o -$(LFL) -o etapa2
 
 lex.yy.o: parser.y scanner.l
-	bison -d parser.y --report=all
+	bison -d parser.y --verbose
 	flex --header-file=lex.yy.h scanner.l
 	$(CC) -c lex.yy.c parser.tab.c
 
 clean:
-	rm -f etapa2 lex.yy.* parser.tab.* *.o parser.output
+	rm -rf etapa2 lex.yy.* parser.tab.* *.o parser.output *.dSYM
+	
+#arquivo dSYM aparece no macOS

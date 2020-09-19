@@ -73,46 +73,111 @@ Alterar FLOAT e outras regras que usassem isso
 %%
 
 programa: declaracao
-        | programa declaracao ;
+        | programa declaracao;
 
-declaracao: global
-          | funcao;
+declaracao: var_global
+          | funcao_global;
+
+static_opcional: TK_PR_STATIC
+               | %empty;
+
+const_opcional: TK_PR_CONST
+              | %empty;
 
 tipo: TK_PR_INT
     | TK_PR_FLOAT
     | TK_PR_CHAR
     | TK_PR_BOOL
-    | TK_PR_STRING ;
+    | TK_PR_STRING;
 
-ids: ids ',' id
-   | id ;
+var_global: static_opcional tipo ids ';';
 
-id: TK_IDENTIFICADOR
-  | TK_IDENTIFICADOR '[' TK_LIT_INT ']' ;
+ids: ids ',' id_global
+   | id_global;
 
-global: TK_PR_STATIC tipo ids ';'
-      | tipo ids ';';
+id_global: TK_IDENTIFICADOR
+         | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
 
+funcao_global: header_func_global bloco;
 
-funcao: header bloco;
+header_func_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')';
 
-header: TK_PR_STATIC tipo TK_IDENTIFICADOR '(' params ')'
-      | tipo TK_IDENTIFICADOR '(' params ')'
-      | TK_PR_STATIC tipo TK_IDENTIFICADOR '(' ')'
-      | tipo TK_IDENTIFICADOR '(' ')' ;
+params_list_global: global_args_list
+                  | %empty;
 
-params: params ',' param
-      | param ;
+global_args_list: global_args_list ',' global_func_arg
+                | global_func_arg;
 
-param: TK_PR_CONST tipo TK_IDENTIFICADOR
-     | tipo TK_IDENTIFICADOR ;
+global_func_arg: const_opcional tipo TK_IDENTIFICADOR;
 
-bloco: '{' comandos '}';
+bloco: '{' comando_list '}';
 
-comandos: comando ';' comandos
-        | %empty ;
+comando_list: comando ';' comando_list
+        | %empty;
 
-comando: %empty;
+comando: var_local
+       | atrib
+       | fluxo
+       | comando_es
+       | func_call
+       | shift
+       | retorno
+       | bloco;
+
+var_local: static_opcional const_opcional tipo variavel;
+
+variavel: variavel ',' TK_IDENTIFICADOR
+        | TK_IDENTIFICADOR
+        | TK_IDENTIFICADOR TK_OC_LE lit_ou_id;
+
+id_expr: TK_IDENTIFICADOR
+       | TK_IDENTIFICADOR '[' expressao ']';
+
+atrib: id_expr '=' expressao;
+
+fluxo: if
+     | for
+     | while_do;
+
+if: TK_PR_IF '(' expressao ')' bloco else_opcional;
+else_opcional: TK_PR_ELSE bloco
+             | %empty;
+
+for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco;
+
+while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco;
+
+comando_es: TK_PR_INPUT TK_IDENTIFICADOR
+          | TK_PR_OUTPUT lit_ou_id;
+
+func_call: TK_IDENTIFICADOR '(' args_list ')';
+
+args_list: id_or_exp_list
+         | %empty;
+
+id_or_exp_list: id_or_exp_list ',' id_or_exp
+              | id_or_exp;
+
+id_or_exp: TK_IDENTIFICADOR
+         | expressao;
+
+shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT
+     | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT;
+
+retorno: TK_PR_RETURN expressao
+       | TK_PR_BREAK
+       | TK_PR_CONTINUE;
+
+lit_ou_id: literal | TK_IDENTIFICADOR;
+
+literal: TK_LIT_INT
+       | TK_LIT_FLOAT
+       | TK_LIT_FALSE
+       | TK_LIT_TRUE
+       | TK_LIT_CHAR
+       | TK_LIT_STRING;
+
+expressao: ;
 
 %%
 
