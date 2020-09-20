@@ -23,7 +23,7 @@ inlinecomment \/\/.*
 block_start \/\*
 block_end \*\/
 
-intlit [+-]?{digit}+
+intlit {digit}+
 floatlit {intlit}"."{digit}+((E|e){intlit})?
 
 /* exclusive start conditions */

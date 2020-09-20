@@ -155,11 +155,11 @@ func_call: TK_IDENTIFICADOR '(' args_list ')';
 args_list: id_or_exp_list
          | %empty;
 
-id_or_exp_list: id_or_exp_list ',' id_or_exp
-              | id_or_exp;
+id_or_exp_list: id_or_exp_list ',' expressao
+	      | expressao;
 
-id_or_exp: TK_IDENTIFICADOR
-         | expressao;
+//id_or_exp: TK_IDENTIFICADOR
+//         | expressao;
 
 shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT
      | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT;
@@ -177,7 +177,50 @@ literal: TK_LIT_INT
        | TK_LIT_CHAR
        | TK_LIT_STRING;
 
-expressao: ;
+expressao: 
+	parenteses_ou_operando operador_binario expressao
+	| parenteses_ou_operando;
+	
+parenteses_ou_operando:
+	'(' expressao ')'
+	| operandos
+	| operador_unario parenteses_ou_operando;
+
+operandos:
+	id_expr
+	| TK_LIT_INT
+	| TK_LIT_FLOAT
+	| TK_LIT_TRUE
+	| TK_LIT_FALSE;
+
+operador_unario:
+	'+'
+	| '-'
+	| '!'
+	| '&'
+	| '*'
+	| '?'
+	| '#';
+
+operador_binario:
+	'+'
+	| '-'
+	| '*'
+	| '/'
+	| '%'
+	| '|'
+	| '&'
+	| '^'
+	| TK_OC_LE
+	| TK_OC_GE
+	| TK_OC_EQ
+	| TK_OC_NE
+	| TK_OC_AND
+	| TK_OC_OR
+	| TK_OC_SL
+	| TK_OC_SR
+	| '?' expressao ':';
+
 
 %%
 
