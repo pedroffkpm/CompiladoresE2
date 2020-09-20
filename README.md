@@ -18,23 +18,23 @@ ___
         - ~~comandos de shift~~
         - ~~comando de retorno, break, continue~~
         - ~~comandos de controle de fluxo~~
-    - Expressões aritméticas, lógicas:
-        - Operadores:
-            - Unários: `+`, `-`, `!`, `&`, `*`, `?`, `#`
-                - (modificar etapa 1: TK_INT_LIT não pode mais considerar os sinais)
+    ~~- Expressões aritméticas, lógicas:~~
+        ~~- Operadores:~~
+            ~~- Unários: `+`, `-`, `!`, `&`, `*`, `?`, `#`~~
+                ~~- (modificar etapa 1: TK_INT_LIT não pode mais considerar os sinais)~~
                 - Alterar também regras como a TK_FLOAT_LIT que usassem isso
-            - Binários: `+`, `-`, `*`, `/`, `%`, `|`, `&`, `^`, comparadores relacionais, lógicos (`&&`, `||`)
-            - Ternários: `expressão` `?` `expressão` `:` `expressão`
-            - Associativos à direita: `&`, `*` (acesso a ponteiros), `#`
+            ~~- Binários: `+`, `-`, `*`, `/`, `%`, `|`, `&`, `^`, comparadores relacionais, lógicos (`&&`, `||`)~~
+            ~~- Ternários: `expressão` `?` `expressão` `:` `expressão`~~
+            ~~- Associativos à direita: `&`, `*` (acesso a ponteiros), `#`~~
 
 - Relatório de Erro Sintático
     - ~~mensagem de erro com a linha de código~~
-    - retornar um valor diferente de 0
+    - ~~retornar um valor diferente de 0~~
 
 - Remoção de conflitos gramaticais
-    - verificar arquivo `parser.output` com a opção `--report-file`
-        - conflitos Reduce/Reduce
-        - conflitos Shift/Reduce
+    ~~- verificar arquivo `parser.output` com a opção `--report-file`~~
+        ~~- conflitos Reduce/Reduce~~
+        ~~- conflitos Shift/Reduce~~
 
 
 ### Entrega:

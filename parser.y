@@ -5,7 +5,11 @@
 
     extern int get_line_number(void);
     int yylex(void);
-    void yyerror (char const *s);
+    int yyerror (char const *s){
+	printf("%s, on line %d\n", s, get_line_number());
+	return -1;
+}
+
 %}
 
 %token TK_PR_INT
@@ -224,6 +228,6 @@ operador_binario:
 
 %%
 
-// void yyerror (char const *s) {
+//void yyerror (char const *s) {
 //     fprintf(stderr, "%s at line %d\n", s, get_line_number());
 // }
