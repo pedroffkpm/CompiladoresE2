@@ -2,6 +2,8 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "lex.yy.h"
+    
+    #define YYERROR_VERBOSE 1
 
     extern int get_line_number(void);
     extern int get_column_number(void);
@@ -161,9 +163,6 @@ args_list: id_or_exp_list
 id_or_exp_list: id_or_exp_list ',' expressao
 	      | expressao;
 
-//id_or_exp: TK_IDENTIFICADOR
-//         | expressao;
-
 shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT
      | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT;
 
@@ -187,7 +186,8 @@ expressao:
 parenteses_ou_operando:
 	'(' expressao ')'
 	| operandos
-	| operador_unario parenteses_ou_operando;
+	| operador_unario parenteses_ou_operando
+    | func_call;
 
 operandos:
 	id_expr
