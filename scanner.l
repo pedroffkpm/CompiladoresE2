@@ -10,7 +10,7 @@ digit [0-9]
 letter [a-zA-Z]
 alphanumeric {letter}|{digit}
 
-char_esp [,;:\(\)\[\]\{\}\+\-|*/<>=!&%#ˆ.$]
+char_esp [,;:\(\)\[\]\{\}\+\-|*/<>=!&%#ˆ.$?^]
 id {letter}({alphanumeric}|_)*
 
 controlchar "\\0"|"\\t"|"\\n"|"\\v"|"\\f"|"\\r"
