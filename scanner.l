@@ -3,6 +3,9 @@
 #include "parser.tab.h"
 
 static int line_count = 1;
+static int column_count = 0;
+void update_line_column();
+
 %}
 
 white [ \t]+
@@ -31,71 +34,88 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 
 %%
 
-"int" { return TK_PR_INT; }
-"float" { return TK_PR_FLOAT; }
-"bool" { return TK_PR_BOOL; }
-"char" { return TK_PR_CHAR; }
-"string" { return TK_PR_STRING; }
-"if" { return TK_PR_IF; }
-"then" { return TK_PR_THEN; }
-"else" { return TK_PR_ELSE; }
-"while" { return TK_PR_WHILE; }
-"do" { return TK_PR_DO; }
-"input" { return TK_PR_INPUT; }
-"output" { return TK_PR_OUTPUT; }
-"return" { return TK_PR_RETURN; }
-"const" { return TK_PR_CONST; }
-"static" { return TK_PR_STATIC; }
-"foreach" { return TK_PR_FOREACH; }
-"for" { return TK_PR_FOR; }
-"switch" { return TK_PR_SWITCH; }
-"case" { return TK_PR_CASE; }
-"break" { return TK_PR_BREAK; }
-"continue" { return TK_PR_CONTINUE; }
-"class" { return TK_PR_CLASS; }
-"private" { return TK_PR_PRIVATE; }
-"public" { return TK_PR_PUBLIC; }
-"protected" { return TK_PR_PROTECTED; }
-"end" { return TK_PR_END; }
-"default" { return TK_PR_DEFAULT; }
+"int" { update_line_column(); return TK_PR_INT; }
+"float" { update_line_column(); return TK_PR_FLOAT; }
+"bool" { update_line_column(); return TK_PR_BOOL; }
+"char" { update_line_column(); return TK_PR_CHAR; }
+"string" { update_line_column(); return TK_PR_STRING; }
+"if" { update_line_column(); return TK_PR_IF; }
+"then" { update_line_column(); return TK_PR_THEN; }
+"else" { update_line_column(); return TK_PR_ELSE; }
+"while" { update_line_column(); return TK_PR_WHILE; }
+"do" { update_line_column(); return TK_PR_DO; }
+"input" { update_line_column(); return TK_PR_INPUT; }
+"output" { update_line_column(); return TK_PR_OUTPUT; }
+"return" { update_line_column(); return TK_PR_RETURN; }
+"const" { update_line_column(); return TK_PR_CONST; }
+"static" { update_line_column(); return TK_PR_STATIC; }
+"foreach" { update_line_column(); return TK_PR_FOREACH; }
+"for" { update_line_column(); return TK_PR_FOR; }
+"switch" { update_line_column(); return TK_PR_SWITCH; }
+"case" { update_line_column(); return TK_PR_CASE; }
+"break" { update_line_column(); return TK_PR_BREAK; }
+"continue" { update_line_column(); return TK_PR_CONTINUE; }
+"class" { update_line_column(); return TK_PR_CLASS; }
+"private" { update_line_column(); return TK_PR_PRIVATE; }
+"public" { update_line_column(); return TK_PR_PUBLIC; }
+"protected" { update_line_column(); return TK_PR_PROTECTED; }
+"end" { update_line_column(); return TK_PR_END; }
+"default" { update_line_column(); return TK_PR_DEFAULT; }
 
-"<=" { return TK_OC_LE; }
-">=" { return TK_OC_GE; }
-"==" { return TK_OC_EQ; }
-"!=" { return TK_OC_NE; }
-"&&" { return TK_OC_AND; }
-"||" { return TK_OC_OR; }
-">>" { return TK_OC_SR; }
-"<<" { return TK_OC_SL; }
+"<=" { update_line_column(); return TK_OC_LE; }
+">=" { update_line_column(); return TK_OC_GE; }
+"==" { update_line_column(); return TK_OC_EQ; }
+"!=" { update_line_column(); return TK_OC_NE; }
+"&&" { update_line_column(); return TK_OC_AND; }
+"||" { update_line_column(); return TK_OC_OR; }
+">>" { update_line_column(); return TK_OC_SR; }
+"<<" { update_line_column(); return TK_OC_SL; }
 
-{intlit} { return TK_LIT_INT; }
-{floatlit} { return TK_LIT_FLOAT; }
-false { return TK_LIT_FALSE; }
-true { return TK_LIT_TRUE; }
+{intlit} { update_line_column(); return TK_LIT_INT; }
+{floatlit} { update_line_column(); return TK_LIT_FLOAT; }
+false { update_line_column(); return TK_LIT_FALSE; }
+true { update_line_column(); return TK_LIT_TRUE; }
 
-'({asciialphabet}|{controlchar})' { return TK_LIT_CHAR; }
-\"[^\"\n]*\" { return TK_LIT_STRING; }
+'({asciialphabet}|{controlchar})' { update_line_column(); return TK_LIT_CHAR; }
+\"[^\"\n]*\" { update_line_column(); return TK_LIT_STRING; }
 
-{id} { return TK_IDENTIFICADOR; }
+{id} { update_line_column(); return TK_IDENTIFICADOR; }
 
-{char_esp} { return yytext[0]; }
-{linebreak} { line_count++; }
+{char_esp} { update_line_column(); return yytext[0]; }
+{linebreak} { update_line_column(); }
 
-{white} 
+{white} { update_line_column(); }
 
-{inlinecomment}
+{inlinecomment} { update_line_column(); }
 
-{block_start} { BEGIN(MULTILINE_COMMENT); }
-<MULTILINE_COMMENT>{block_end} { BEGIN(INITIAL); }
-<MULTILINE_COMMENT>{linebreak} { line_count++; }
-<MULTILINE_COMMENT>. 
+{block_start} { update_line_column(); BEGIN(MULTILINE_COMMENT); }
+<MULTILINE_COMMENT>{block_end} { update_line_column(); BEGIN(INITIAL); }
+<MULTILINE_COMMENT>{linebreak} { update_line_column();  }
+<MULTILINE_COMMENT>. { update_line_column(); }
 
 
-. { return TOKEN_ERRO; }
+. { update_line_column(); return TOKEN_ERRO; }
 
 
 %%
 
 int get_line_number() {
     return line_count;
+}
+
+int get_column_number() {
+    return column_count;
+}
+
+void update_line_column() {
+    int i;
+
+    for(i=0; yytext[i] != '\0'; i++) {
+        if(yytext[i] == '\n') {
+            column_count = 0;
+            line_count++;
+        } else {
+            column_count++;
+        }
+    }
 }

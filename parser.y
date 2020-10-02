@@ -4,13 +4,12 @@
     #include "lex.yy.h"
 
     extern int get_line_number(void);
+    extern int get_column_number(void);
     int yylex(void);
-    int yyerror (char const *s){
-	printf("%s, on line %d\n", s, get_line_number());
-	return -1;
-}
-
+    int yyerror (char const *s);
 %}
+
+%define parse.error verbose
 
 %token TK_PR_INT
 %token TK_PR_FLOAT
@@ -228,6 +227,8 @@ operador_binario:
 
 %%
 
-//void yyerror (char const *s) {
-//     fprintf(stderr, "%s at line %d\n", s, get_line_number());
-// }
+    int yyerror (char const *s){
+	printf("Line %d, Column %d:\t%s\n", get_line_number(), get_column_number(), s);
+
+    return -1;
+}
