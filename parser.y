@@ -17,8 +17,6 @@
     #include "ast.h"
 }
 
-
-
 %union {
     struct valor_lexico_t {
         int line;
@@ -27,12 +25,17 @@
         TokenValue valor;
     } valor_lexico;
 
-    // Node* node;
-    // ParamNode* param;
+    bool static;
+    bool const;
+
+    Node* node;
+    ParamNode* param;
 
 }
 
 %define parse.error verbose
+
+//TERMINAIS (token)
 
 %token TK_PR_INT
 %token TK_PR_FLOAT
@@ -61,24 +64,43 @@
 %token TK_PR_PROTECTED
 %token TK_PR_END
 %token TK_PR_DEFAULT
-%token TK_OC_LE
-%token TK_OC_GE
-%token TK_OC_EQ
-%token TK_OC_NE
-%token TK_OC_AND
-%token TK_OC_OR
-%token TK_OC_SL
-%token TK_OC_SR
+%token<valor_lexico.valor.bin_op> TK_OC_LE
+%token<valor_lexico.valor.bin_op> TK_OC_GE
+%token<valor_lexico.valor.bin_op> TK_OC_EQ
+%token<valor_lexico.valor.bin_op> TK_OC_NE
+%token<valor_lexico.valor.bin_op> TK_OC_AND
+%token<valor_lexico.valor.bin_op> TK_OC_OR
+%token<valor_lexico.valor.bin_op> TK_OC_SL
+%token<valor_lexico.valor.bin_op> TK_OC_SR
 %token TK_OC_FORWARD_PIPE
 %token TK_OC_BASH_PIPE
-%token TK_LIT_INT
-%token TK_LIT_FLOAT
-%token TK_LIT_FALSE
-%token TK_LIT_TRUE
-%token TK_LIT_CHAR
-%token TK_LIT_STRING
-%token TK_IDENTIFICADOR
+%token<valor_lexico.valor.int_lit> TK_LIT_INT
+%token<valor_lexico.valor.float_lit> TK_LIT_FLOAT
+%token<valor_lexico.valor.bool_lit> TK_LIT_FALSE
+%token<valor_lexico.valor.bool_lit> TK_LIT_TRUE
+%token<valor_lexico.valor.char_lit> TK_LIT_CHAR
+%token<valor_lexico.valor.string_lit> TK_LIT_STRING
+%token<valor_lexico.valor.identificador> TK_IDENTIFICADOR
 %token TOKEN_ERRO
+
+//Não-Terminais
+
+%type<node> programa
+%type<node> declaracao
+
+%type<static> static_opcional
+%type<const> const_opcional
+
+//%type<??> tipo
+
+%type<node> var_global
+%type<node> ids
+%type<node> id_global
+%type<node> funcao_global
+//header  não deveria ser nodo, como fazer?
+
+
+
 
 /* precedencia da menor pra maior */
 
