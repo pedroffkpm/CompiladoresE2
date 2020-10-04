@@ -17,6 +17,8 @@
     #include "ast.h"
 }
 
+
+
 %union {
     struct valor_lexico_t {
         int line;
@@ -29,6 +31,8 @@
     // ParamNode* param;
 
 }
+
+%define parse.error verbose
 
 %token TK_PR_INT
 %token TK_PR_FLOAT

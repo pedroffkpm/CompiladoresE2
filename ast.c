@@ -1,22 +1,5 @@
 #include "ast.h"
 
-void liberaParam(ParamNode* pnode) {
-    if(pnode == NULL) {
-        return;
-    }
-
-    if(pnode->name != NULL) {
-        free(pnode->name);
-    }
-
-    if(pnode->nextNode != NULL) {
-        liberaParam(pnode->nextNode);
-    }
-
-    free(pnode);
-
-}
-
 void libera(Node* node) {
     if(node == NULL) {
         return;
@@ -65,7 +48,7 @@ void libera(Node* node) {
         libera(node->val->block.val);
         break;
     case ATRIB:
-        libera(node->val->attrib.left);
+        liberaIdExp(node->val->attrib.left);
         libera(node->val->attrib.right);
         break;
     case FUNC_CALL:
@@ -112,8 +95,37 @@ void libera(Node* node) {
 
 }
 
-void exporta(void* arvore) {
+void liberaParam(ParamNode* pnode) {
+    if(pnode == NULL) {
+        return;
+    }
 
+    if(pnode->name != NULL) {
+        free(pnode->name);
+    }
+
+    if(pnode->nextNode != NULL) {
+        liberaParam(pnode->nextNode);
+    }
+
+    free(pnode);
+}
+
+void liberaIdExp(IdExp_Value* idnode) {
+    if(idnode == NULL) {
+        return;
+    }
+
+    if(idnode->name != NULL) {
+        free(idnode->name);
+    }
+
+    libera(idnode->index);
+    free(idnode);
+}
+
+void exporta(void* arvore) {
+    return;
 }
 
 /*............  CRIA NOS  ............*/
@@ -246,9 +258,20 @@ Node* make_identificador(char* name, Node* index) {
 }
 
 Node* make_attrib(Node* left, Node* right) {
+    IdExp_Value old_left = left->val->identificador;
+    IdExp_Value* new_left = (IdExp_Value*) malloc(sizeof(IdExp_Value));
+
+    new_left->name = old_left.name;
+    new_left->index = old_left.index;
+
     Node* n = make_node(ATRIB);
-    n->val->attrib.left = left;
+    n->val->attrib.left = new_left;
     n->val->attrib.right = right;
+
+    old_left.index = NULL;
+    old_left.name = NULL;
+    free(left->val);
+    free(left);
 
     return n;
 }

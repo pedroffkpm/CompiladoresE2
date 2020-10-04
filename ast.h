@@ -6,6 +6,14 @@
 
 //cada tipo deveria ser um nó da AST??
 
+//     var_global
+//   /         | 
+//tipo       identificador
+// |           |
+//int          x 
+
+//???
+
 typedef enum Type {
     //literais
     INT,
@@ -234,18 +242,21 @@ typedef enum {
 } TokenType;
 
 typedef union {
-    char char_especial;
+    char* char_especial;
     char* bin_op;
     char* un_op;
     char* identificador;
     int int_lit;
     float float_lit;
-    char char_lit;
+    char* char_lit;
     bool bool_lit;
     char* string_lit;
 } TokenValue;
 
 /*............  FUNCS  ............*/
+
+void liberaParam(ParamNode* pnode);
+void liberaIdExp(IdExp_Value* idnode);
 
 Node* make_int(int value);
 Node* make_float(float value);

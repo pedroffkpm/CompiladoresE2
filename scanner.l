@@ -4,6 +4,7 @@
 
 static int column_count = 0;
 void update_line_column();
+void update_strdup(TokenType type);
 
 %}
 
@@ -175,7 +176,7 @@ void update_strdup(TokenType type) {
             yylval.valor_lexico.valor.bin_op = strdup(yytext);
             break;
         case CHAR_LITERAL:
-            yylval.valor_lexico.valor.char_lit = strdup(yytext[0]);
+            yylval.valor_lexico.valor.char_lit = strdup(yytext);
             break;
         case STRING_LITERAL:
             yylval.valor_lexico.valor.string_lit = strdup(yytext);
@@ -184,7 +185,7 @@ void update_strdup(TokenType type) {
             yylval.valor_lexico.valor.identificador = strdup(yytext);
             break;
         case CHAR_ESPECIAL:
-            yylval.valor_lexico.valor.char_especial = strdup(yytext[0]);
+            yylval.valor_lexico.valor.char_especial = strdup(yytext);
             break;
         default:
             break;
