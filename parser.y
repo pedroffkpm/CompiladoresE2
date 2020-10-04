@@ -1,7 +1,7 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
-    #include "lex.yy.h"
+    #include "lex.yy.h"	
     
     #define YYERROR_VERBOSE 1
 
@@ -25,8 +25,8 @@
         TokenValue valor;
     } valor_lexico;
 
-    bool static;
-    bool const;
+    bool tstatic;
+    bool tconst;
 
     Node* node;
     ParamNode* param;
@@ -37,33 +37,33 @@
 
 //TERMINAIS (token)
 
-%token TK_PR_INT
-%token TK_PR_FLOAT
-%token TK_PR_BOOL
-%token TK_PR_CHAR
-%token TK_PR_STRING
-%token TK_PR_IF
-%token TK_PR_THEN
-%token TK_PR_ELSE
-%token TK_PR_WHILE
-%token TK_PR_DO
-%token TK_PR_INPUT
-%token TK_PR_OUTPUT
-%token TK_PR_RETURN
-%token TK_PR_CONST
-%token TK_PR_STATIC
-%token TK_PR_FOREACH
-%token TK_PR_FOR
-%token TK_PR_SWITCH
-%token TK_PR_CASE
-%token TK_PR_BREAK
-%token TK_PR_CONTINUE
-%token TK_PR_CLASS
-%token TK_PR_PRIVATE
-%token TK_PR_PUBLIC
-%token TK_PR_PROTECTED
-%token TK_PR_END
-%token TK_PR_DEFAULT
+%token<Type> TK_PR_INT
+%token<Type> TK_PR_FLOAT
+%token<Type> TK_PR_BOOL
+%token<Type> TK_PR_CHAR
+%token<Type> TK_PR_STRING
+%token<Type> TK_PR_IF
+%token<Type> TK_PR_THEN
+%token<Type> TK_PR_ELSE
+%token<Type> TK_PR_WHILE
+%token<Type> TK_PR_DO
+%token<Type> TK_PR_INPUT
+%token<Type> TK_PR_OUTPUT
+%token<Type> TK_PR_RETURN
+%token<Type> TK_PR_CONST
+%token<Type> TK_PR_STATIC
+%token<Type> TK_PR_FOREACH
+%token<Type> TK_PR_FOR
+%token<Type> TK_PR_SWITCH
+%token<Type> TK_PR_CASE
+%token<Type> TK_PR_BREAK
+%token<Type> TK_PR_CONTINUE
+%token<Type> TK_PR_CLASS
+%token<Type> TK_PR_PRIVATE
+%token<Type> TK_PR_PUBLIC
+%token<Type> TK_PR_PROTECTED
+%token<Type> TK_PR_END
+%token<Type> TK_PR_DEFAULT
 %token<valor_lexico.valor.bin_op> TK_OC_LE
 %token<valor_lexico.valor.bin_op> TK_OC_GE
 %token<valor_lexico.valor.bin_op> TK_OC_EQ
@@ -88,8 +88,8 @@
 %type<node> programa
 %type<node> declaracao
 
-%type<static> static_opcional
-%type<const> const_opcional
+%type<tstatic> static_opcional
+%type<tconst> const_opcional
 
 //%type<??> tipo
 
@@ -98,6 +98,36 @@
 %type<node> id_global
 %type<node> funcao_global
 //header  não deveria ser nodo, como fazer?
+%type<node> header_func_global
+%type<node> params_list_global
+%type<node> global_args_list
+%type<node> global_funk_arg
+%type<node> bloco
+%type<node> comando_list
+%type<node> comando
+%type<node> var_local
+%type<node> variavel
+%type<node> id_expr
+%type<node> atrib
+%type<node> fluxo
+%type<node> if
+%type<node> else_opcional
+%type<node> for
+%type<node> while_do
+%type<node> comando_es
+%type<node> func_call
+%type<node> args_list
+%type<node> id_or_exp_list
+%type<node> shift
+%type<node> retorno
+%type<node> lit_ou_id
+%type<node> literal
+%type<node> expressao
+%type<node> parenteses_ou_operando
+%type<node> operandos
+%type<Un_Op_Type> operador_unario
+%type<Bin_Op_Type> operador_binario
+%type<Type> tipo
 
 
 
@@ -123,7 +153,7 @@ Alterar FLOAT e outras regras que usassem isso
 programa: declaracao
         | programa declaracao;
 
-declaracao: var_global
+declaracao: var_global //rever pois pode haver mais de uma declaração em uma única linha
           | funcao_global;
 
 static_opcional: TK_PR_STATIC
@@ -178,7 +208,7 @@ variavel: variavel ',' TK_IDENTIFICADOR
         | TK_IDENTIFICADOR
         | TK_IDENTIFICADOR TK_OC_LE lit_ou_id;
 
-id_expr: TK_IDENTIFICADOR
+id_expr: TK_IDENTIFICADOR 
        | TK_IDENTIFICADOR '[' expressao ']';
 
 atrib: id_expr '=' expressao;
@@ -213,7 +243,8 @@ retorno: TK_PR_RETURN expressao
        | TK_PR_BREAK
        | TK_PR_CONTINUE;
 
-lit_ou_id: literal | TK_IDENTIFICADOR;
+lit_ou_id: literal 
+	| TK_IDENTIFICADOR;
 
 literal: TK_LIT_INT
        | TK_LIT_FLOAT
@@ -230,13 +261,13 @@ parenteses_ou_operando:
 	'(' expressao ')'
 	| operandos
 	| operador_unario parenteses_ou_operando
-    | func_call;
+    	| func_call;
 
 operandos:
 	id_expr
-	| TK_LIT_INT
+	| TK_LIT_INT 
 	| TK_LIT_FLOAT
-	| TK_LIT_TRUE
+	| TK_LIT_TRUE 
 	| TK_LIT_FALSE;
 
 operador_unario:
