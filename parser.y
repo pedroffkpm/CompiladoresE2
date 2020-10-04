@@ -5,11 +5,30 @@
     
     #define YYERROR_VERBOSE 1
 
+    extern void* arvore;
+
     extern int get_line_number(void);
     extern int get_column_number(void);
     int yylex(void);
     int yyerror (char const *s);
 %}
+
+%code requires {
+    #include "ast.h"
+}
+
+%union {
+    struct valor_lexico_t {
+        int line;
+        int col;
+        TokenType tipo;
+        TokenValue valor;
+    } valor_lexico;
+
+    // Node* node;
+    // ParamNode* param;
+
+}
 
 %token TK_PR_INT
 %token TK_PR_FLOAT

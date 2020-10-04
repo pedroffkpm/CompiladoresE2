@@ -1,10 +1,114 @@
 #include "ast.h"
 
-void deletaParam() {
+void liberaParam(ParamNode* pnode) {
+    if(pnode == NULL) {
+        return;
+    }
+
+    if(pnode->name != NULL) {
+        free(pnode->name);
+    }
+
+    if(pnode->nextNode != NULL) {
+        liberaParam(pnode->nextNode);
+    }
+
+    free(pnode);
 
 }
 
-void libera(void* arvore) {
+void libera(Node* node) {
+    if(node == NULL) {
+        return;
+    }
+
+    switch (node->type)
+    {
+    case INT:
+    case FLOAT:
+    case BOOL:
+    case CHAR:
+        break;
+    case STRING:
+        free(node->val->string_value);
+        break;
+    case IDENTIFICADOR:
+        free(node->val->identificador.name);
+        libera(node->val->identificador.index);
+        break;
+    case UN_OP:
+        libera(node->val->un_op.node);
+        break;
+    case BIN_OP:
+        libera(node->val->bin_op.left);
+        libera(node->val->bin_op.right);
+        break;
+    case TER_OP:
+        libera(node->val->ter_op.cond);
+        libera(node->val->ter_op.left);
+        libera(node->val->ter_op.right);
+        break;
+    case VARIABLE:
+        free(node->val->var_local.name);
+        libera(node->val->var_local.lit_ou_id);
+        break;
+    case GLOBAL_VAR_DEC:
+        free(node->val->global_var.name);
+        break;
+    case FUNC_DEC:
+        free(node->val->global_func.name);
+        libera(node->val->global_func.body);
+        //o que fazer com param? eh memory leak?
+        liberaParam(node->val->global_func.param);
+        break;
+    case BLOCK:
+        libera(node->val->block.val);
+        break;
+    case ATRIB:
+        libera(node->val->attrib.left);
+        libera(node->val->attrib.right);
+        break;
+    case FUNC_CALL:
+        free(node->val->func_call.name);
+        libera(node->val->func_call.arg);
+        break;
+    case RETURN:
+        libera(node->val->retorno.val);
+        break;
+    case BREAK:
+    case CONTINUE:
+        break;
+    case INPUT:
+        libera(node->val->input.val);
+        break;
+    case OUTPUT:
+        libera(node->val->output.val);
+        break;
+    case IF:
+        libera(node->val->if_op.cond);
+        libera(node->val->if_op.bloco);
+        libera(node->val->if_op.else_node);
+        break;
+    case FOR:
+        libera(node->val->for_op.init);
+        libera(node->val->for_op.expr);
+        libera(node->val->for_op.attrib);
+        libera(node->val->for_op.bloco);
+        break;
+    case WHILE_DO:
+        libera(node->val->while_do_op.expr);
+        libera(node->val->while_do_op.bloco);
+        break;
+    default:
+        break;
+    }
+
+    if(node->nextNode != NULL) {
+        libera(node->nextNode);
+    }
+
+    free(node->val);
+    free(node);
 
 }
 
@@ -20,6 +124,17 @@ Node* make_node(Type type) {
     n->val = malloc(sizeof(union Value));
     n->nextNode = NULL;
     return n;
+}
+
+ParamNode* make_param(Type type, bool _const, char* name) {
+    ParamNode* n = (ParamNode*) malloc(sizeof(ParamNode));
+    n->type = type;
+    n->_const = _const;
+    n->name = name;
+    n->nextNode = NULL;
+
+    return n;
+
 }
 
 Node* make_int(int value) {
@@ -97,7 +212,7 @@ Node* make_global_var(Type type, bool _static, char* name, int array_size) {
 
 }
 
-Node* make_global_func(bool _static, Type type, char* name, ParamValue* param, Node* body) {
+Node* make_global_func(bool _static, Type type, char* name, ParamNode* param, Node* body) {
     Node* n = make_node(FUNC_DEC);
     n->val->global_func._static = _static;
     n->val->global_func.type = type;

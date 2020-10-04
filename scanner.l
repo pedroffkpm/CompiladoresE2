@@ -2,7 +2,6 @@
 %{
 #include "parser.tab.h"
 
-static int line_count = 1;
 static int column_count = 0;
 void update_line_column();
 
@@ -31,6 +30,8 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 
 /* exclusive start conditions */
 %x MULTILINE_COMMENT
+
+%option yylineno
 
 %%
 
@@ -62,26 +63,70 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 "end" { update_line_column(); return TK_PR_END; }
 "default" { update_line_column(); return TK_PR_DEFAULT; }
 
-"<=" { update_line_column(); return TK_OC_LE; }
-">=" { update_line_column(); return TK_OC_GE; }
-"==" { update_line_column(); return TK_OC_EQ; }
-"!=" { update_line_column(); return TK_OC_NE; }
-"&&" { update_line_column(); return TK_OC_AND; }
-"||" { update_line_column(); return TK_OC_OR; }
-">>" { update_line_column(); return TK_OC_SR; }
-"<<" { update_line_column(); return TK_OC_SL; }
+"<=" { update_line_column();
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_LE; }
 
-{intlit} { update_line_column(); return TK_LIT_INT; }
-{floatlit} { update_line_column(); return TK_LIT_FLOAT; }
-false { update_line_column(); return TK_LIT_FALSE; }
-true { update_line_column(); return TK_LIT_TRUE; }
+">=" { update_line_column();
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_GE; }
 
-'({asciialphabet}|{controlchar})' { update_line_column(); return TK_LIT_CHAR; }
-\"[^\"\n]*\" { update_line_column(); return TK_LIT_STRING; }
+"==" { update_line_column(); 
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_EQ; }
 
-{id} { update_line_column(); return TK_IDENTIFICADOR; }
+"!=" { update_line_column(); 
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_NE; }
 
-{char_esp} { update_line_column(); return yytext[0]; }
+"&&" { update_line_column(); 
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_AND; }
+
+"||" { update_line_column(); 
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_OR; }
+
+">>" { update_line_column(); 
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_SR; }
+
+"<<" { update_line_column(); 
+    update_strdup(OP_COMPOSTO);
+    return TK_OC_SL; }
+
+{intlit} { update_line_column();
+    yylval.valor_lexico.tipo = INT_LITERAL;
+    yylval.valor_lexico.valor.int_lit = atoi(yytext);
+    return TK_LIT_INT; }
+{floatlit} { update_line_column();
+    yylval.valor_lexico.tipo = FLOAT_LITERAL;
+    yylval.valor_lexico.valor.float_lit = atof(yytext);
+    return TK_LIT_FLOAT; }
+false { update_line_column();
+    yylval.valor_lexico.tipo = BOOL_LITERAL;
+    yylval.valor_lexico.valor.bool_lit = false;
+    return TK_LIT_FALSE; }
+true { update_line_column();
+    yylval.valor_lexico.tipo = BOOL_LITERAL;
+    yylval.valor_lexico.valor.bool_lit = true;
+    return TK_LIT_TRUE; }
+
+'({asciialphabet}|{controlchar})' { update_line_column();
+                                    update_strdup(CHAR_LITERAL);
+                                    return TK_LIT_CHAR; }
+
+\"[^\"\n]*\" { update_line_column();
+            update_strdup(STRING_LITERAL);
+            return TK_LIT_STRING; }
+
+{id} { update_line_column();
+        update_strdup(ID);
+        return TK_IDENTIFICADOR; }
+
+{char_esp} { update_line_column();
+            update_strdup(CHAR_ESPECIAL);
+            return yytext[0]; }
 {linebreak} { update_line_column(); }
 
 {white} { update_line_column(); }
@@ -100,7 +145,7 @@ true { update_line_column(); return TK_LIT_TRUE; }
 %%
 
 int get_line_number() {
-    return line_count;
+    return yylineno;
 }
 
 int get_column_number() {
@@ -113,9 +158,35 @@ void update_line_column() {
     for(i=0; yytext[i] != '\0'; i++) {
         if(yytext[i] == '\n') {
             column_count = 0;
-            line_count++;
         } else {
             column_count++;
         }
+    }
+
+    yylval.valor_lexico.line = yylineno;
+    yylval.valor_lexico.col = column_count;
+}
+
+void update_strdup(TokenType type) {
+    yylval.valor_lexico.tipo = type;
+
+    switch(type) {
+        case OP_COMPOSTO:
+            yylval.valor_lexico.valor.bin_op = strdup(yytext);
+            break;
+        case CHAR_LITERAL:
+            yylval.valor_lexico.valor.char_lit = strdup(yytext[0]);
+            break;
+        case STRING_LITERAL:
+            yylval.valor_lexico.valor.string_lit = strdup(yytext);
+            break;
+        case ID:
+            yylval.valor_lexico.valor.identificador = strdup(yytext);
+            break;
+        case CHAR_ESPECIAL:
+            yylval.valor_lexico.valor.char_especial = strdup(yytext[0]);
+            break;
+        default:
+            break;
     }
 }

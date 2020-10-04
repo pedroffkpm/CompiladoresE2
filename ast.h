@@ -91,12 +91,12 @@ typedef struct
     int array_size;
 } GlobalVar_Value;
 
-typedef struct ParamValue {
+typedef struct ParamNode {
     bool _const;
     Type type;
     char* name;
-    struct ParamValue* nextNode; //proximo item da lista encadeada (parametro)
-} ParamValue;
+    struct ParamNode* nextNode; //proximo item da lista encadeada (parametro)
+} ParamNode;
 
 typedef struct {
     Node* val; //lista precisa ser um nodo?
@@ -109,7 +109,7 @@ typedef struct {
     bool _static;
     Type type;
     char* name;
-    ParamValue* param;
+    ParamNode* param;
     Node* body;
 
 } GlobalFunc_Value;
@@ -220,6 +220,31 @@ typedef union Value {
 
 } Value;
 
+/*............  yylval TOKEN  ............*/
+
+typedef enum {
+  CHAR_ESPECIAL,
+  OP_COMPOSTO,
+  ID,
+  INT_LITERAL,
+  FLOAT_LITERAL,
+  CHAR_LITERAL,
+  BOOL_LITERAL,
+  STRING_LITERAL,
+} TokenType;
+
+typedef union {
+    char char_especial;
+    char* bin_op;
+    char* un_op;
+    char* identificador;
+    int int_lit;
+    float float_lit;
+    char char_lit;
+    bool bool_lit;
+    char* string_lit;
+} TokenValue;
+
 /*............  FUNCS  ............*/
 
 Node* make_int(int value);
@@ -232,8 +257,10 @@ Node* make_un_op(Un_Op_Type type, Node* value);
 Node* make_bin_op(Bin_Op_Type type, Node* left, Node* right);
 Node* make_ter_op(Node* cond, Node* left, Node* right);
 
+ParamNode* make_param(Type type, bool _const, char* name);
+
 Node* make_global_var(Type type, bool _static, char* name, int array_size);
-Node* make_global_func(bool _static, Type type, char* name, ParamValue* param, Node* body);
+Node* make_global_func(bool _static, Type type, char* name, ParamNode* param, Node* body);
 Node* make_local_var(bool _static, bool _const, Type type, char* name, Node* value);
 Node* make_identificador(char* name, Node* index);
 Node* make_attrib(Node* left, Node* right);
