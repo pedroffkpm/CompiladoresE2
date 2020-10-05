@@ -101,7 +101,7 @@
 %type<node> header_func_global
 %type<node> params_list_global
 %type<node> global_args_list
-%type<node> global_funk_arg
+%type<node> global_func_arg
 %type<node> bloco
 %type<node> comando_list
 %type<node> comando
@@ -208,8 +208,8 @@ variavel: variavel ',' TK_IDENTIFICADOR
         | TK_IDENTIFICADOR
         | TK_IDENTIFICADOR TK_OC_LE lit_ou_id;
 
-id_expr: TK_IDENTIFICADOR 
-       | TK_IDENTIFICADOR '[' expressao ']';
+id_expr: TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); }
+       | TK_IDENTIFICADOR '[' expressao ']' {$$ = make_identificador($1, $3); } ;
 
 atrib: id_expr '=' expressao;
 
@@ -246,12 +246,12 @@ retorno: TK_PR_RETURN expressao
 lit_ou_id: literal 
 	| TK_IDENTIFICADOR;
 
-literal: TK_LIT_INT
-       | TK_LIT_FLOAT
-       | TK_LIT_FALSE
-       | TK_LIT_TRUE
-       | TK_LIT_CHAR
-       | TK_LIT_STRING;
+literal: TK_LIT_INT { $$ = make_int($1); }
+       | TK_LIT_FLOAT { $$ = make_float($1); }
+       | TK_LIT_FALSE { $$ = make_bool($1); }
+       | TK_LIT_TRUE { $$ = make_bool($1); }
+       | TK_LIT_CHAR { $$ = make_char($1); }
+       | TK_LIT_STRING { $$ = make_string($1); }; 
 
 expressao: 
 	parenteses_ou_operando operador_binario expressao

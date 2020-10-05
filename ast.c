@@ -124,8 +124,302 @@ void liberaIdExp(IdExp_Value* idnode) {
     free(idnode);
 }
 
-void exporta(void* arvore) {
+void exporta(Node* node) {
+    if (node == NULL) {
+        return;
+    }
+    print_tree(node);
     return;
+}
+
+void print_param(ParamNode* node) {
+    if(node == NULL) {
+        return;
+    }
+
+    if(node->nextNode != NULL) {
+        printf("%p, %p\n", node, node->nextNode);
+    }
+
+    print_param(node->nextNode);
+    return;
+}
+
+void print_tree(Node* node) {
+
+    if(node == NULL) {
+        return;
+    }
+
+    switch (node->type)
+    {
+    case INT:
+    case FLOAT:
+    case BOOL:
+    case CHAR:
+    case STRING:
+    case IDENTIFICADOR:
+        break;
+    case UN_OP:
+        printf("%p, %p\n", node, node->val->un_op.node);
+        print_tree(node->val->un_op.node);
+        break;
+    case BIN_OP:
+        printf("%p, %p\n", node, node->val->bin_op.left);
+        printf("%p, %p\n", node, node->val->bin_op.right);
+        print_tree(node->val->bin_op.left);
+        print_tree(node->val->bin_op.right);
+        break;
+    case TER_OP:
+        printf("%p, %p\n", node, node->val->ter_op.cond);
+        printf("%p, %p\n", node, node->val->ter_op.left);
+        printf("%p, %p\n", node, node->val->ter_op.right);
+        print_tree(node->val->ter_op.cond);
+        print_tree(node->val->ter_op.left);
+        print_tree(node->val->ter_op.right);
+        break;
+    case VARIABLE:
+        printf("%p, %p\n", node, node->val->var_local.lit_ou_id);
+        print_tree(node->val->var_local.lit_ou_id);
+        break;
+    case GLOBAL_VAR_DEC:
+        break;
+    case FUNC_DEC:
+        printf("%p, %p\n", node, node->val->global_func.body);
+        printf("%p, %p\n", node, node->val->global_func.param);
+        print_param(node->val->global_func.param);
+        print_tree(node->val->global_func.body); //aqui
+        break;
+    case BLOCK:
+        break;
+    case ATRIB:
+        printf("%p, %p\n", node, node->val->attrib.left);
+        printf("%p, %p\n", node, node->val->attrib.right);
+
+        print_tree(node->val->attrib.right);
+        break;
+    case FUNC_CALL:
+        printf("%p, %p\n", node, node->val->func_call.arg);
+        print_tree(node->val->func_call.arg);
+        break;
+    case RETURN:
+        printf("%p, %p\n", node, node->val->retorno.val);
+        print_tree(node->val->retorno.val);
+        break;
+    case BREAK:
+    case CONTINUE:
+        break;
+    case INPUT:
+        printf("%p, %p\n", node, node->val->input.val);
+        print_tree(node->val->input.val);
+        break;
+    case OUTPUT:
+        printf("%p, %p\n", node, node->val->output.val);
+        print_tree(node->val->output.val);
+        break;
+    case IF:
+        print_tree(node->val->if_op.cond);
+        print_tree(node->val->if_op.bloco);
+        print_tree(node->val->if_op.else_node);
+        break;
+    case FOR:
+        print_tree(node->val->for_op.init);
+        print_tree(node->val->for_op.expr);
+        print_tree(node->val->for_op.attrib);
+        print_tree(node->val->for_op.bloco);
+        break;
+    case WHILE_DO:
+        print_tree(node->val->while_do_op.expr);
+        print_tree(node->val->while_do_op.bloco);
+        break;
+    default:
+        break;
+    }
+
+    print_tree(node->nextNode);
+    return;
+}
+
+
+
+void print_label(char* label) {
+    printf(" [label=\"%s\"];\n", label);
+}
+
+void print_un_op(Un_Op_Type type) {
+    switch(type) {
+        case PLUS:
+            print_label("+");
+            break;
+        case MINUS:
+            print_label("-");
+            break;
+        case NOT:
+            print_label("!");
+            break;
+        case ADDRESS:
+            print_label("&");
+            break;
+        case POINTER_VALUE:
+            print_label("*");
+            break;
+        case QUESTION_MARK:
+            print_label("?");
+            break;
+        case HASH:
+            print_label("#");
+            break;
+        default:
+            break;
+    }
+    return;
+}
+
+void print_bin_op(Bin_Op_Type type) {
+    switch(type) {
+        case ADD:
+            print_label("+");
+            break;
+        case SUB:
+            print_label("-");
+            break;
+        case MUL:
+            print_label("*");
+            break;
+        case DIV:
+            print_label("/");
+            break;
+        case DIV_REST:
+            print_label("%%");
+            break;
+        case BIT_OR:
+            print_label("|");
+            break;
+        case BIT_AND:
+            print_label("&");
+            break;
+        case POW:
+            print_label("^");
+            break;
+        case LESS_EQ:
+            print_label("<=");
+            break;
+        case GREATER_EQ:
+            print_label(">=");
+            break;
+        case EQUAL:
+            print_label("==");
+            break;
+        case N_EQUAL:
+            print_label("!=");
+            break;
+        case AND:
+            print_label("&&");
+            break;
+        case OR:
+            print_label("||");
+            break;
+        case SHIFT_L:
+            print_label("<<");
+            break;
+        case SHIFT_R:
+            print_label(">>");
+            break;
+    }
+    return;
+}
+
+void print_nome(Node* node) {
+    if (node == NULL) {
+        return;
+    }
+
+    if (node->val != NULL) {
+    printf("%p", node);
+    }
+
+    switch (node->type)
+    {
+    case INT:
+        char label[12];
+        sprintf(label, "%d", node->val->int_value);
+        print_label(label);
+        break;
+    case FLOAT:
+        char label[25];
+        sprintf(label, "%f", node->val->float_value);
+        print_label(label);
+        break;
+    case BOOL:
+        print_label(node->val->bool_value ? "true" : "false");
+        break;
+    case CHAR:
+        printf(" [label=\"%c\"];\n", node->val->char_value);
+        break;
+    case STRING:
+        print_label(node->val->string_value);
+        break;
+    case IDENTIFICADOR:
+        print_label(node->val->identificador.name);
+        break;
+    case UN_OP:
+        print_label(print_un_op(node->val->un_op.type));
+        break;
+    case BIN_OP:
+        print_label(print_bin_op(node->val->bin_op.type));
+
+        break;
+    case TER_OP:
+        print_label("?:");
+        break;
+    case VARIABLE:
+        if(node->val->var_local.lit_ou_id != NULL) {
+            print_label("<=");
+        }
+        break;
+    case GLOBAL_VAR_DEC:
+        print_label(node->val->global_var.name);
+        break;
+    case FUNC_DEC:
+        print_label(node->val->global_func.name);
+        break;
+    case BLOCK:
+        break;
+    case ATRIB:
+        print_label("=");
+        break;
+    case FUNC_CALL:
+        printf(" [label=\"call %s\"];\n", node->val->func_call.name);
+        break;
+    case RETURN:
+        print_label("return");
+        break;
+    case BREAK:
+        print_label("break");
+        break;
+    case CONTINUE:
+        print_label("continue");
+        break;
+    case INPUT:
+        print_label("input");
+        break;
+    case OUTPUT:
+        print_label("output");
+        break;
+    case IF:
+        print_label("if");
+        break;
+    case FOR:
+        print_label("for");
+        break;
+    case WHILE_DO:
+        print_label("while");
+        break;
+    default:
+        break;
+    }
+
+
 }
 
 /*............  CRIA NOS  ............*/
