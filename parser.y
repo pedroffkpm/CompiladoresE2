@@ -208,67 +208,67 @@ variavel: variavel ',' TK_IDENTIFICADOR
         | TK_IDENTIFICADOR
         | TK_IDENTIFICADOR TK_OC_LE lit_ou_id;
 
-id_expr: TK_IDENTIFICADOR 
-       | TK_IDENTIFICADOR '[' expressao ']';
+id_expr: TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); }
+       | TK_IDENTIFICADOR '[' expressao ']' { $$ = make_identificador($1, $2); };
 
-atrib: id_expr '=' expressao;
+atrib: id_expr '=' expressao { $$ = make_attrib($1,$2);}; 
 
 fluxo: if
      | for
      | while_do;
 
-if: TK_PR_IF '(' expressao ')' bloco else_opcional;
-else_opcional: TK_PR_ELSE bloco
-             | %empty;
+if: TK_PR_IF '(' expressao ')' bloco else_opcional { $$ = make_if( $3, $5, $6);};
+else_opcional: TK_PR_ELSE bloco { $$ = make_block($2);}
+             | %empty{ $$ = NULL;};
 
-for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco;
+for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco{ $$ = make_for($3,$5,$7,$9);};
 
-while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco;
+while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco{ $$ = make_while($3,$6);};
 
-comando_es: TK_PR_INPUT TK_IDENTIFICADOR
-          | TK_PR_OUTPUT lit_ou_id;
+comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = make_input($2);}
+          | TK_PR_OUTPUT lit_ou_id { $$ = make_output($2);};
 
-func_call: TK_IDENTIFICADOR '(' args_list ')';
+func_call: TK_IDENTIFICADOR '(' args_list ')'{ $$ = make_func_call($1, $3);};
 
 args_list: id_or_exp_list
-         | %empty;
+         | %empty { $$ = NULL;};
 
 id_or_exp_list: id_or_exp_list ',' expressao
-	      | expressao;
+	      | expressao { $$ = $1;};
 
 shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT
      | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT;
 
-retorno: TK_PR_RETURN expressao
-       | TK_PR_BREAK
-       | TK_PR_CONTINUE;
+retorno: TK_PR_RETURN expressao { $$ = make_return($2);}
+       | TK_PR_BREAK { $$ = make_break();}
+       | TK_PR_CONTINUE { $$ = make_continue();};
 
-lit_ou_id: literal 
-	| TK_IDENTIFICADOR;
+lit_ou_id: literal { $$ = $1}
+	| TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); };
 
-literal: TK_LIT_INT
-       | TK_LIT_FLOAT
-       | TK_LIT_FALSE
-       | TK_LIT_TRUE
-       | TK_LIT_CHAR
-       | TK_LIT_STRING;
+literal: TK_LIT_INT { $$ = make_int($1); }
+       | TK_LIT_FLOAT { $$ = make_float($1); }
+       | TK_LIT_FALSE { $$ = make_bool($1); }
+       | TK_LIT_TRUE { $$ = make_bool($1); }
+       | TK_LIT_CHAR { $$ = make_char($1); }
+       | TK_LIT_STRING { $$ = make_string($1); };
 
 expressao: 
-	parenteses_ou_operando operador_binario expressao
-	| parenteses_ou_operando;
+	parenteses_ou_operando operador_binario expressao { $$ = make_bin_op($2, $1, $3);}
+	| parenteses_ou_operando { $$ = $1; };
 	
 parenteses_ou_operando:
-	'(' expressao ')'
-	| operandos
-	| operador_unario parenteses_ou_operando
-    	| func_call;
+	'(' expressao ')' { $$ = $2;}
+	| operandos { $$ = $1;}
+	| operador_unario parenteses_ou_operando { make_un_op($1,$2);}
+    | func_call { $$ = $1;};
 
 operandos:
-	id_expr
-	| TK_LIT_INT 
-	| TK_LIT_FLOAT
-	| TK_LIT_TRUE 
-	| TK_LIT_FALSE;
+	id_expr { $$ = $1;}
+	| TK_LIT_INT { $$ = make_int($1); }
+	| TK_LIT_FLOAT { $$ = make_float($1); }
+	| TK_LIT_TRUE { $$ = make_bool($1); }
+	| TK_LIT_FALSE { $$ = make_bool($1); };
 
 operador_unario:
 	'+'
