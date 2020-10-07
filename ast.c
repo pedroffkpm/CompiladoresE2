@@ -26,14 +26,14 @@ void libera(Node* node) {
         libera(node->val->bin_op.left);
         libera(node->val->bin_op.right);
         break;
-    case TER_OP:
-        libera(node->val->ter_op.cond);
-        libera(node->val->ter_op.left);
-        libera(node->val->ter_op.right);
+    case TERN_OP:
+        libera(node->val->tern_op.cond);
+        libera(node->val->tern_op.left);
+        libera(node->val->tern_op.right);
         break;
     case VARIABLE:
-        free(node->val->var_local.name);
-        libera(node->val->var_local.lit_ou_id);
+        free(node->val->var_local.identificador);
+        libera(node->val->var_local.init);
         break;
     case GLOBAL_VAR_DEC:
         free(node->val->global_var.name);
@@ -48,7 +48,7 @@ void libera(Node* node) {
         libera(node->val->block.val);
         break;
     case ATRIB:
-        liberaIdExp(node->val->attrib.left);
+        liberaVariable(node->val->attrib.left);
         libera(node->val->attrib.right);
         break;
     case FUNC_CALL:
@@ -69,7 +69,7 @@ void libera(Node* node) {
         break;
     case IF:
         libera(node->val->if_op.cond);
-        libera(node->val->if_op.bloco);
+        libera(node->val->if_op.then);
         libera(node->val->if_op.else_node);
         break;
     case FOR:
@@ -111,7 +111,7 @@ void liberaParam(ParamNode* pnode) {
     free(pnode);
 }
 
-void liberaIdExp(IdExp_Value* idnode) {
+void liberaVariable(Variable* idnode) {
     if(idnode == NULL) {
         return;
     }
@@ -170,17 +170,17 @@ void print_tree(Node* node) {
         print_tree(node->val->bin_op.left);
         print_tree(node->val->bin_op.right);
         break;
-    case TER_OP:
-        printf("%p, %p\n", node, node->val->ter_op.cond);
-        printf("%p, %p\n", node, node->val->ter_op.left);
-        printf("%p, %p\n", node, node->val->ter_op.right);
-        print_tree(node->val->ter_op.cond);
-        print_tree(node->val->ter_op.left);
-        print_tree(node->val->ter_op.right);
+    case TERN_OP:
+        printf("%p, %p\n", node, node->val->tern_op.cond);
+        printf("%p, %p\n", node, node->val->tern_op.left);
+        printf("%p, %p\n", node, node->val->tern_op.right);
+        print_tree(node->val->tern_op.cond);
+        print_tree(node->val->tern_op.left);
+        print_tree(node->val->tern_op.right);
         break;
     case VARIABLE:
-        printf("%p, %p\n", node, node->val->var_local.lit_ou_id);
-        print_tree(node->val->var_local.lit_ou_id);
+        printf("%p, %p\n", node, node->val->var_local.init);
+        print_tree(node->val->var_local.init);
         break;
     case GLOBAL_VAR_DEC:
         break;
@@ -219,7 +219,7 @@ void print_tree(Node* node) {
         break;
     case IF:
         print_tree(node->val->if_op.cond);
-        print_tree(node->val->if_op.bloco);
+        print_tree(node->val->if_op.then);
         print_tree(node->val->if_op.else_node);
         break;
     case FOR:
@@ -320,11 +320,16 @@ void print_bin_op(Bin_Op_Type type) {
             print_label("||");
             break;
         case SHIFT_L:
-            print_label("<<");
-            break;
+        print_label("<<");
+        break;
         case SHIFT_R:
             print_label(">>");
             break;
+        case BASH_PIPE:
+            print_label("|");
+            break;
+        case FORWARD_PIPE:
+            print_label(">");
     }
     return;
 }
@@ -363,17 +368,16 @@ void print_nome(Node* node) {
         print_label(node->val->identificador.name);
         break;
     case UN_OP:
-        print_label(print_un_op(node->val->un_op.type));
+        print_un_op(node->val->un_op.type);
         break;
     case BIN_OP:
-        print_label(print_bin_op(node->val->bin_op.type));
-
+        print_bin_op(node->val->bin_op.type);
         break;
-    case TER_OP:
+    case TERN_OP:
         print_label("?:");
         break;
     case VARIABLE:
-        if(node->val->var_local.lit_ou_id != NULL) {
+        if(node->val->var_local.init != NULL) {
             print_label("<=");
         }
         break;
@@ -432,10 +436,8 @@ Node* make_node(Type type) {
     return n;
 }
 
-ParamNode* make_param(Type type, bool _const, char* name) {
+ParamNode* make_param(char* name) {
     ParamNode* n = (ParamNode*) malloc(sizeof(ParamNode));
-    n->type = type;
-    n->_const = _const;
     n->name = name;
     n->nextNode = NULL;
 
@@ -494,34 +496,28 @@ Node* make_bin_op(Bin_Op_Type type, Node* left, Node* right) {
     n->val->bin_op.right = right;
 
     return n;
-
 }
 
-Node* make_ter_op(Node* cond, Node* left, Node* right) {
-    Node* n = make_node(TER_OP);
-    n->val->ter_op.cond = cond;
-    n->val->ter_op.left = left;
-    n->val->ter_op.right = right;
+Node* make_tern_op(Node* cond, Node* left, Node* right) {
+    Node* n = make_node(TERN_OP);
+    n->val->tern_op.cond = cond;
+    n->val->tern_op.left = left;
+    n->val->tern_op.right = right;
 
     return n;
-
 }
 
-Node* make_global_var(Type type, bool _static, char* name, int array_size) {
+Node* make_global_var(char* name, int array_size) {
     Node* n = make_node(GLOBAL_VAR_DEC);
     n->val->global_var.name = name;
-    n->val->global_var._static = _static;
-    n->val->global_var.type = type;
     n->val->global_var.array_size = array_size;
 
     return n;
 
 }
 
-Node* make_global_func(bool _static, Type type, char* name, ParamNode* param, Node* body) {
+Node* make_global_func(char* name, ParamNode* param, Node* body) {
     Node* n = make_node(FUNC_DEC);
-    n->val->global_func._static = _static;
-    n->val->global_func.type = type;
     n->val->global_func.name = name;
     n->val->global_func.param = param;
     n->val->global_func.body = body;
@@ -530,13 +526,10 @@ Node* make_global_func(bool _static, Type type, char* name, ParamNode* param, No
 
 }
 
-Node* make_local_var(bool _static, bool _const, Type type, char* name, Node* value) {
+Node* make_local_var(char* name, Node* value) {
     Node* n = make_node(VARIABLE);
-    n->val->var_local._static = _static;
-    n->val->var_local._const = _const;
-    n->val->var_local.type = type;
-    n->val->var_local.name = name;
-    n->val->var_local.lit_ou_id = value;
+    n->val->var_local.identificador = name;
+    n->val->var_local.init = value;
 
     return n;
 
@@ -552,8 +545,8 @@ Node* make_identificador(char* name, Node* index) {
 }
 
 Node* make_attrib(Node* left, Node* right) {
-    IdExp_Value old_left = left->val->identificador;
-    IdExp_Value* new_left = (IdExp_Value*) malloc(sizeof(IdExp_Value));
+    Variable old_left = left->val->identificador;
+    Variable* new_left = (Variable*) malloc(sizeof(Variable));
 
     new_left->name = old_left.name;
     new_left->index = old_left.index;
@@ -570,11 +563,11 @@ Node* make_attrib(Node* left, Node* right) {
     return n;
 }
 
-Node* make_if(Node* cond, Node* bloco, Node* else_node) {
+Node* make_if(Node* cond, Node* then, Node* else_node) {
     Node* n = make_node(IF);
 
     n->val->if_op.cond = cond;
-    n->val->if_op.bloco = bloco;
+    n->val->if_op.then = then;
     n->val->if_op.else_node = else_node;
 
     return n;

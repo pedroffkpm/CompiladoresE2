@@ -37,33 +37,33 @@
 
 //TERMINAIS (token)
 
-%token<Type> TK_PR_INT
-%token<Type> TK_PR_FLOAT
-%token<Type> TK_PR_BOOL
-%token<Type> TK_PR_CHAR
-%token<Type> TK_PR_STRING
-%token<Type> TK_PR_IF
-%token<Type> TK_PR_THEN
-%token<Type> TK_PR_ELSE
-%token<Type> TK_PR_WHILE
-%token<Type> TK_PR_DO
-%token<Type> TK_PR_INPUT
-%token<Type> TK_PR_OUTPUT
-%token<Type> TK_PR_RETURN
-%token<Type> TK_PR_CONST
-%token<Type> TK_PR_STATIC
-%token<Type> TK_PR_FOREACH
-%token<Type> TK_PR_FOR
-%token<Type> TK_PR_SWITCH
-%token<Type> TK_PR_CASE
-%token<Type> TK_PR_BREAK
-%token<Type> TK_PR_CONTINUE
-%token<Type> TK_PR_CLASS
-%token<Type> TK_PR_PRIVATE
-%token<Type> TK_PR_PUBLIC
-%token<Type> TK_PR_PROTECTED
-%token<Type> TK_PR_END
-%token<Type> TK_PR_DEFAULT
+%token TK_PR_INT
+%token TK_PR_FLOAT
+%token TK_PR_BOOL
+%token TK_PR_CHAR
+%token TK_PR_STRING
+%token TK_PR_IF
+%token TK_PR_THEN
+%token TK_PR_ELSE
+%token TK_PR_WHILE
+%token TK_PR_DO
+%token TK_PR_INPUT
+%token TK_PR_OUTPUT
+%token TK_PR_RETURN
+%token TK_PR_CONST
+%token TK_PR_STATIC
+%token TK_PR_FOREACH
+%token TK_PR_FOR
+%token TK_PR_SWITCH
+%token TK_PR_CASE
+%token TK_PR_BREAK
+%token TK_PR_CONTINUE
+%token TK_PR_CLASS
+%token TK_PR_PRIVATE
+%token TK_PR_PUBLIC
+%token TK_PR_PROTECTED
+%token TK_PR_END
+%token TK_PR_DEFAULT
 %token<valor_lexico.valor.bin_op> TK_OC_LE
 %token<valor_lexico.valor.bin_op> TK_OC_GE
 %token<valor_lexico.valor.bin_op> TK_OC_EQ
@@ -72,8 +72,8 @@
 %token<valor_lexico.valor.bin_op> TK_OC_OR
 %token<valor_lexico.valor.bin_op> TK_OC_SL
 %token<valor_lexico.valor.bin_op> TK_OC_SR
-%token TK_OC_FORWARD_PIPE
-%token TK_OC_BASH_PIPE
+%token<valor_lexico.valor.bin_op> TK_OC_FORWARD_PIPE
+%token<valor_lexico.valor.bin_op> TK_OC_BASH_PIPE
 %token<valor_lexico.valor.int_lit> TK_LIT_INT
 %token<valor_lexico.valor.float_lit> TK_LIT_FLOAT
 %token<valor_lexico.valor.bool_lit> TK_LIT_FALSE
@@ -88,8 +88,8 @@
 %type<node> programa
 %type<node> declaracao
 
-%type<tstatic> static_opcional
-%type<tconst> const_opcional
+// %type<tstatic> static_opcional
+// %type<tconst> const_opcional
 
 //%type<??> tipo
 
@@ -127,7 +127,7 @@
 %type<node> operandos
 %type<Un_Op_Type> operador_unario
 %type<Bin_Op_Type> operador_binario
-%type<Type> tipo
+// %type tipo
 
 
 
@@ -142,6 +142,11 @@
 
 %start programa
 
+%initial-action {
+    arvore = $$;
+};
+
+/* arvore (external) comeca a apontar pra cabeca do parse */
 
 /*
 TODO: Alterar funcionamento do scanner.l para parar de reconhecer + e - na frente dos TK_INT_LIT
@@ -168,7 +173,7 @@ tipo: TK_PR_INT
     | TK_PR_BOOL
     | TK_PR_STRING;
 
-var_global: static_opcional tipo ids ';';
+var_global: static_opcional tipo ids ';'; { $$ = make_global_var() }
 
 ids: ids ',' id_global
    | id_global;
@@ -209,9 +214,9 @@ variavel: variavel ',' TK_IDENTIFICADOR
         | TK_IDENTIFICADOR TK_OC_LE lit_ou_id;
 
 id_expr: TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); }
-       | TK_IDENTIFICADOR '[' expressao ']' { $$ = make_identificador($1, $2); };
+       | TK_IDENTIFICADOR '[' expressao ']' { $$ = make_identificador($1, $3); };
 
-atrib: id_expr '=' expressao { $$ = make_attrib($1,$2);}; 
+atrib: id_expr '=' expressao { $$ = make_attrib($1, $3);}; 
 
 fluxo: if
      | for
@@ -225,7 +230,7 @@ for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco{ $$ = make_for($3,$5,
 
 while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco{ $$ = make_while($3,$6);};
 
-comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = make_input($2);}
+comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = make_input($2); }
           | TK_PR_OUTPUT lit_ou_id { $$ = make_output($2);};
 
 func_call: TK_IDENTIFICADOR '(' args_list ')'{ $$ = make_func_call($1, $3);};
@@ -243,7 +248,7 @@ retorno: TK_PR_RETURN expressao { $$ = make_return($2);}
        | TK_PR_BREAK { $$ = make_break();}
        | TK_PR_CONTINUE { $$ = make_continue();};
 
-lit_ou_id: literal { $$ = $1}
+lit_ou_id: literal { $$ = $1; }
 	| TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); };
 
 literal: TK_LIT_INT { $$ = make_int($1); }
@@ -271,7 +276,7 @@ operandos:
 	| TK_LIT_FALSE { $$ = make_bool($1); };
 
 operador_unario:
-	'+'
+	'+' { $$ = Un_Op_Type.PLUS; }
 	| '-'
 	| '!'
 	| '&'

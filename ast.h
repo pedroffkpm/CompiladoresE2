@@ -25,7 +25,7 @@ typedef enum Type {
     //operacoes
     UN_OP,
     BIN_OP,
-    TER_OP,
+    TERN_OP,
     //declaracoes
     VARIABLE,
     GLOBAL_VAR_DEC,
@@ -59,8 +59,10 @@ typedef enum Bin_Op_Type {
     N_EQUAL,
     AND,
     OR,
-    SHIFT_L,
+    SHIFT_L, //shift fora das operacoes binarias reforca melhor que soh pode vir lit_int depois do operador
     SHIFT_R,
+    BASH_PIPE, //pipe nao esta no parser ainda
+    FORWARD_PIPE,
 } Bin_Op_Type;
 
 typedef enum Un_Op_Type {
@@ -81,7 +83,7 @@ union Value;
 typedef struct Node {
     Type type;
     union Value* val; //vai "pra baixo" na arvore (filho/valor)
-    struct Node* nextNode; //vai "pro lado" na arvore (irmao)
+    struct Node* nextNode; //vai "pro lado" na arvore (irmao/prox. da lista)
 
 } Node;
 
@@ -93,18 +95,21 @@ typedef struct Node {
 
 typedef struct
 {
-    Type type;
-    bool _static;
-    char* name;
+    char* name; //deveria ser um nodo?? node de identificador??
     int array_size;
-} GlobalVar_Value;
+} GlobalVar_Value; //declaracao de var global mesmo sem init faz parte sim da ast
 
 typedef struct ParamNode {
-    bool _const;
-    Type type;
     char* name;
     struct ParamNode* nextNode; //proximo item da lista encadeada (parametro)
 } ParamNode;
+
+typedef struct {
+    char* name;
+    ParamNode* param; //argumento(s)
+    Node* body; //primeiro comando/bloco
+
+} GlobalFunc_Value;
 
 typedef struct {
     Node* val; //lista precisa ser um nodo?
@@ -114,20 +119,8 @@ typedef struct {
 } ListValue;
 
 typedef struct {
-    bool _static;
-    Type type;
-    char* name;
-    ParamNode* param;
-    Node* body;
-
-} GlobalFunc_Value;
-
-typedef struct {
-    bool _static;
-    bool _const;
-    Type type;
-    char* name;
-    Node* lit_ou_id;
+    Variable* identificador;
+    Node* init;
 
 } VarLocal_Value;
 
@@ -135,17 +128,17 @@ typedef struct {
     char* name;
     Node* index;
 
-} IdExp_Value;
+} Variable;
 
 typedef struct {
-    IdExp_Value* left;
+    Variable* left;
     Node* right;
 
 } Attrib_Value; //id_expr[index] (left) = expressao (right)
 
 typedef struct {
     Node* cond;
-    Node* bloco;
+    Node* then;
     Node* else_node;
 
 } If_Value;
@@ -194,7 +187,7 @@ typedef struct {
     Node* cond;
     Node* left;
     Node* right;
-} Ter_Op_Value;
+} Tern_Op_Value;
 
 
 /*............  VALUES  ............*/
@@ -207,13 +200,14 @@ typedef union Value {
 
     Un_Op_Value un_op;
     Bin_Op_Value bin_op;
-    Ter_Op_Value ter_op;
+
+    Tern_Op_Value tern_op;
 
     GlobalVar_Value global_var;
     GlobalFunc_Value global_func;
 
     VarLocal_Value var_local;
-    IdExp_Value identificador;
+    Variable identificador;
     Attrib_Value attrib;
 
     If_Value if_op;
@@ -256,7 +250,7 @@ typedef union {
 /*............  FUNCS  ............*/
 
 void liberaParam(ParamNode* pnode);
-void liberaIdExp(IdExp_Value* idnode);
+void liberaVariable(Variable* idnode);
 
 Node* make_int(int value);
 Node* make_float(float value);
@@ -266,17 +260,17 @@ Node* make_string(char* value);
 
 Node* make_un_op(Un_Op_Type type, Node* value);
 Node* make_bin_op(Bin_Op_Type type, Node* left, Node* right);
-Node* make_ter_op(Node* cond, Node* left, Node* right);
+Node* make_tern_op(Node* cond, Node* left, Node* right);
 
-ParamNode* make_param(Type type, bool _const, char* name);
+ParamNode* make_param(char* name);
 
-Node* make_global_var(Type type, bool _static, char* name, int array_size);
-Node* make_global_func(bool _static, Type type, char* name, ParamNode* param, Node* body);
-Node* make_local_var(bool _static, bool _const, Type type, char* name, Node* value);
+Node* make_global_var(char* name, int array_size);
+Node* make_global_func(char* name, ParamNode* param, Node* body);
+Node* make_local_var(char* name, Node* value);
 Node* make_identificador(char* name, Node* index);
 Node* make_attrib(Node* left, Node* right);
 
-Node* make_if(Node* cond, Node* bloco, Node* else_node);
+Node* make_if(Node* cond, Node* then, Node* else_node);
 Node* make_for(Node* init, Node* expr, Node* attrib, Node* bloco);
 Node* make_while(Node* expr, Node* bloco);
 Node* make_func_call(char* name, Node* arg);
