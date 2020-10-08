@@ -65,35 +65,39 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 "default" { update_line_column(); return TK_PR_DEFAULT; }
 
 "<=" { update_line_column();
-    update_strdup(OP_COMPOSTO);
+    yylval.valor_lexico.tipo = OP_COMPOSTO;
+    yylval.valor_lexico.valor.bin_op = LESS_EQ;
     return TK_OC_LE; }
 
 ">=" { update_line_column();
-    update_strdup(OP_COMPOSTO);
+    yylval.valor_lexico.tipo = OP_COMPOSTO;
+    yylval.valor_lexico.valor.bin_op = GREATER_EQ;
     return TK_OC_GE; }
 
 "==" { update_line_column(); 
-    update_strdup(OP_COMPOSTO);
+    yylval.valor_lexico.tipo = OP_COMPOSTO;
+    yylval.valor_lexico.valor.bin_op = EQUAL;
     return TK_OC_EQ; }
 
 "!=" { update_line_column(); 
-    update_strdup(OP_COMPOSTO);
+    yylval.valor_lexico.tipo = OP_COMPOSTO;
+    yylval.valor_lexico.valor.bin_op = N_EQUAL;
     return TK_OC_NE; }
 
 "&&" { update_line_column(); 
-    update_strdup(OP_COMPOSTO);
+    yylval.valor_lexico.tipo = OP_COMPOSTO;
+    yylval.valor_lexico.valor.bin_op = AND;
     return TK_OC_AND; }
 
 "||" { update_line_column(); 
-    update_strdup(OP_COMPOSTO);
+    yylval.valor_lexico.tipo = OP_COMPOSTO;
+    yylval.valor_lexico.valor.bin_op = OR;
     return TK_OC_OR; }
 
 ">>" { update_line_column(); 
-    update_strdup(OP_COMPOSTO);
     return TK_OC_SR; }
 
-"<<" { update_line_column(); 
-    update_strdup(OP_COMPOSTO);
+"<<" { update_line_column();
     return TK_OC_SL; }
 
 {intlit} { update_line_column();
@@ -172,11 +176,8 @@ void update_strdup(TokenType type) {
     yylval.valor_lexico.tipo = type;
 
     switch(type) {
-        case OP_COMPOSTO:
-            yylval.valor_lexico.valor.bin_op = strdup(yytext);
-            break;
         case CHAR_LITERAL:
-            yylval.valor_lexico.valor.char_lit = strdup(yytext);
+            yylval.valor_lexico.valor.char_lit = yytext[0];
             break;
         case STRING_LITERAL:
             yylval.valor_lexico.valor.string_lit = strdup(yytext);
@@ -185,7 +186,7 @@ void update_strdup(TokenType type) {
             yylval.valor_lexico.valor.identificador = strdup(yytext);
             break;
         case CHAR_ESPECIAL:
-            yylval.valor_lexico.valor.char_especial = strdup(yytext);
+            yylval.valor_lexico.valor.char_especial = yytext[0];
             break;
         default:
             break;

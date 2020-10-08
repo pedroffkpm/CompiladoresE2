@@ -26,6 +26,8 @@ typedef enum Type {
     UN_OP,
     BIN_OP,
     TERN_OP,
+    SHIFT_L, //shift fora das operacoes binarias reforca melhor que soh pode vir lit_int depois do operador
+    SHIFT_R,
     //declaracoes
     VARIABLE,
     GLOBAL_VAR_DEC,
@@ -59,8 +61,6 @@ typedef enum Bin_Op_Type {
     N_EQUAL,
     AND,
     OR,
-    SHIFT_L, //shift fora das operacoes binarias reforca melhor que soh pode vir lit_int depois do operador
-    SHIFT_R,
     BASH_PIPE, //pipe nao esta no parser ainda
     FORWARD_PIPE,
 } Bin_Op_Type;
@@ -119,16 +119,16 @@ typedef struct {
 } ListValue;
 
 typedef struct {
-    Variable* identificador;
-    Node* init;
-
-} VarLocal_Value;
-
-typedef struct {
     char* name;
     Node* index;
 
 } Variable;
+
+typedef struct {
+    Variable* identificador;
+    Node* init;
+
+} VarLocal_Value;
 
 typedef struct {
     Variable* left;
@@ -200,8 +200,10 @@ typedef union Value {
 
     Un_Op_Value un_op;
     Bin_Op_Value bin_op;
-
     Tern_Op_Value tern_op;
+
+    Attrib_Value shift_l; //distincao entre expressao e comando
+    Attrib_Value shift_r; //shift eh comando; n pode ser representado como op binaria
 
     GlobalVar_Value global_var;
     GlobalFunc_Value global_func;
@@ -236,13 +238,13 @@ typedef enum {
 } TokenType;
 
 typedef union {
-    char* char_especial;
-    char* bin_op;
-    char* un_op;
+    char char_especial;
+    Bin_Op_Type bin_op;
+    Un_Op_Type un_op;
     char* identificador;
     int int_lit;
     float float_lit;
-    char* char_lit;
+    char char_lit;
     bool bool_lit;
     char* string_lit;
 } TokenValue;
@@ -262,11 +264,14 @@ Node* make_un_op(Un_Op_Type type, Node* value);
 Node* make_bin_op(Bin_Op_Type type, Node* left, Node* right);
 Node* make_tern_op(Node* cond, Node* left, Node* right);
 
+Node* make_shift_l(Node* left, Node* right);
+Node* make_shift_r(Node* left, Node* right);
+
 ParamNode* make_param(char* name);
 
 Node* make_global_var(char* name, int array_size);
 Node* make_global_func(char* name, ParamNode* param, Node* body);
-Node* make_local_var(char* name, Node* value);
+Node* make_local_var(Node* identificador, Node* value);
 Node* make_identificador(char* name, Node* index);
 Node* make_attrib(Node* left, Node* right);
 

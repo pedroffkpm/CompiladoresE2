@@ -51,6 +51,14 @@ void libera(Node* node) {
         liberaVariable(node->val->attrib.left);
         libera(node->val->attrib.right);
         break;
+    case SHIFT_L:
+        liberaVariable(node->val->shift_l.left);
+        libera(node->val->shift_l.right);
+        break;
+    case SHIFT_R:
+        liberaVariable(node->val->shift_r.left);
+        libera(node->val->shift_r.right);
+        break;
     case FUNC_CALL:
         free(node->val->func_call.name);
         libera(node->val->func_call.arg);
@@ -122,14 +130,6 @@ void liberaVariable(Variable* idnode) {
 
     libera(idnode->index);
     free(idnode);
-}
-
-void exporta(Node* node) {
-    if (node == NULL) {
-        return;
-    }
-    print_tree(node);
-    return;
 }
 
 void print_param(ParamNode* node) {
@@ -240,10 +240,24 @@ void print_tree(Node* node) {
     return;
 }
 
-
+void exporta(Node* node) {
+    if (node == NULL) {
+        return;
+    }
+    print_tree(node);
+    return;
+}
 
 void print_label(char* label) {
     printf(" [label=\"%s\"];\n", label);
+}
+
+void print_int(int i) {
+    printf(" [label=\"%d\"];\n", i);
+}
+
+void print_float(float f) {
+    printf(" [label=\"%f\"];\n", f);
 }
 
 void print_un_op(Un_Op_Type type) {
@@ -319,12 +333,6 @@ void print_bin_op(Bin_Op_Type type) {
         case OR:
             print_label("||");
             break;
-        case SHIFT_L:
-        print_label("<<");
-        break;
-        case SHIFT_R:
-            print_label(">>");
-            break;
         case BASH_PIPE:
             print_label("|");
             break;
@@ -346,14 +354,10 @@ void print_nome(Node* node) {
     switch (node->type)
     {
     case INT:
-        char label[12];
-        sprintf(label, "%d", node->val->int_value);
-        print_label(label);
+        print_int(node->val->int_value);
         break;
     case FLOAT:
-        char label[25];
-        sprintf(label, "%f", node->val->float_value);
-        print_label(label);
+        print_float(node->val->float_value);
         break;
     case BOOL:
         print_label(node->val->bool_value ? "true" : "false");
@@ -391,6 +395,12 @@ void print_nome(Node* node) {
         break;
     case ATRIB:
         print_label("=");
+        break;
+    case SHIFT_L:
+        print_label("<<");
+        break;
+    case SHIFT_R:
+        print_label(">>");
         break;
     case FUNC_CALL:
         printf(" [label=\"call %s\"];\n", node->val->func_call.name);
@@ -478,7 +488,6 @@ Node* make_string(char* value) {
     n->val->string_value = value;
 
     return n;
-
 }
 
 Node* make_un_op(Un_Op_Type type, Node* value) {
@@ -513,7 +522,6 @@ Node* make_global_var(char* name, int array_size) {
     n->val->global_var.array_size = array_size;
 
     return n;
-
 }
 
 Node* make_global_func(char* name, ParamNode* param, Node* body) {
@@ -523,16 +531,26 @@ Node* make_global_func(char* name, ParamNode* param, Node* body) {
     n->val->global_func.body = body;
 
     return n;
-
 }
 
-Node* make_local_var(char* name, Node* value) {
+Node* make_local_var(Node* identificador, Node* value) {
+    Variable old_id  = identificador->val->identificador;
+    Variable* new_id = (Variable*) malloc(sizeof(Variable));
+
+    new_id->name = old_id.name;
+    new_id->index = old_id.index;
+
     Node* n = make_node(VARIABLE);
-    n->val->var_local.identificador = name;
+    n->val->var_local.identificador = new_id;
     n->val->var_local.init = value;
 
-    return n;
+    old_id.index = NULL;
+    old_id.name = NULL;
+    
+    free(identificador->val);
+    free(identificador);
 
+    return n;
 }
 
 Node* make_identificador(char* name, Node* index) {
@@ -541,7 +559,6 @@ Node* make_identificador(char* name, Node* index) {
     n->val->identificador.index = index;
 
     return n;
-
 }
 
 Node* make_attrib(Node* left, Node* right) {
@@ -563,6 +580,46 @@ Node* make_attrib(Node* left, Node* right) {
     return n;
 }
 
+Node* make_shift_l(Node* left, Node* right) {
+    Variable old_left = left->val->identificador;
+    Variable* new_left = (Variable*) malloc(sizeof(Variable));
+
+    new_left->name = old_left.name;
+    new_left->index = old_left.index;
+
+    Node* n = make_node(SHIFT_L);
+
+    n->val->shift_l.left = new_left;
+    n->val->shift_l.right = right;
+
+    old_left.index = NULL;
+    old_left.name = NULL;
+    free(left->val);
+    free(left);
+
+    return n;
+}
+
+Node* make_shift_r(Node* left, Node* right) {
+    Variable old_left = left->val->identificador;
+    Variable* new_left = (Variable*) malloc(sizeof(Variable));
+
+    new_left->name = old_left.name;
+    new_left->index = old_left.index;
+
+    Node* n = make_node(SHIFT_R);
+
+    n->val->shift_r.left = new_left;
+    n->val->shift_r.right = right;
+
+    old_left.index = NULL;
+    old_left.name = NULL;
+    free(left->val);
+    free(left);
+
+    return n;
+}
+
 Node* make_if(Node* cond, Node* then, Node* else_node) {
     Node* n = make_node(IF);
 
@@ -571,7 +628,6 @@ Node* make_if(Node* cond, Node* then, Node* else_node) {
     n->val->if_op.else_node = else_node;
 
     return n;
-
 }
 
 Node* make_for(Node* init, Node* expr, Node* attrib, Node* bloco) {
@@ -583,7 +639,6 @@ Node* make_for(Node* init, Node* expr, Node* attrib, Node* bloco) {
     n->val->for_op.bloco = bloco;
 
     return n;
-
 }
 
 Node* make_while(Node* expr, Node* bloco) {
@@ -602,7 +657,6 @@ Node* make_func_call(char* name, Node* arg) {
     n->val->func_call.arg = arg;
 
     return n;
-
 }
 
 Node* make_input(Node* value) {
@@ -611,7 +665,6 @@ Node* make_input(Node* value) {
     n->val->input.val = value;
 
     return n;
-
 }
 
 Node* make_output(Node* value) {
@@ -620,7 +673,6 @@ Node* make_output(Node* value) {
     n->val->output.val = value;
 
     return n;
-
 }
 
 Node* make_return(Node* value) {
@@ -629,7 +681,6 @@ Node* make_return(Node* value) {
     n->val->retorno.val = value;
 
     return n;
-
 }
 
 Node* make_block(Node* value) {
@@ -638,21 +689,18 @@ Node* make_block(Node* value) {
     n->val->block.val = value;
 
     return n;
-
 }
 
 Node* make_continue() {
     Node* n = make_node(CONTINUE);
 
     return n;
-
 }
 
 Node* make_break() {
     Node* n = make_node(BREAK);
 
     return n;
-
 }
 
 

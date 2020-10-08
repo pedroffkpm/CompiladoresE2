@@ -98,14 +98,15 @@
 %type<node> id_global
 %type<node> funcao_global
 //header  não deveria ser nodo, como fazer?
-%type<node> header_func_global
-%type<node> params_list_global
-%type<node> global_args_list
-%type<node> global_func_arg
+// %type<node> header_func_global
+%type<param> params_list_global
+%type<param> global_args_list
+%type<param> global_func_arg
 %type<node> bloco
 %type<node> comando_list
 %type<node> comando
 %type<node> var_local
+%type<node> init_opcional
 %type<node> variavel
 %type<node> id_expr
 %type<node> atrib
@@ -125,8 +126,8 @@
 %type<node> expressao
 %type<node> parenteses_ou_operando
 %type<node> operandos
-%type<Un_Op_Type> operador_unario
-%type<Bin_Op_Type> operador_binario
+%type<valor_lexico.valor.un_op> operador_unario
+%type<valor_lexico.valor.bin_op> operador_binario
 // %type tipo
 
 
@@ -143,23 +144,20 @@
 %start programa
 
 %initial-action {
-    arvore = $$;
+    arvore = $$.node; /* n faço ideia de como fazer isso */
 };
 
 /* arvore (external) comeca a apontar pra cabeca do parse */
 
-/*
-TODO: Alterar funcionamento do scanner.l para parar de reconhecer + e - na frente dos TK_INT_LIT
-Alterar FLOAT e outras regras que usassem isso
-*/
+//destructors vem aqui
 
 %%
 
-programa: declaracao
-        | programa declaracao;
+programa: declaracao { $$ = $1; }
+        | declaracao programa { $$ = $1; $$->nextNode = $2; };
 
-declaracao: var_global //rever pois pode haver mais de uma declaração em uma única linha
-          | funcao_global;
+declaracao: var_global { $$ = $1; }//rever pois pode haver mais de uma declaração em uma única linha
+          | funcao_global { $$ = $1; } ;
 
 static_opcional: TK_PR_STATIC
                | %empty;
@@ -173,30 +171,28 @@ tipo: TK_PR_INT
     | TK_PR_BOOL
     | TK_PR_STRING;
 
-var_global: static_opcional tipo ids ';'; { $$ = make_global_var() }
+var_global: static_opcional tipo ids ';' { $$ = $3; } ;
 
-ids: ids ',' id_global
-   | id_global;
+ids: id_global ',' ids {$$ = $1; $$->nextNode = $3; }
+   | id_global { $$ = $1; } ;
 
-id_global: TK_IDENTIFICADOR
-         | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
+id_global: TK_IDENTIFICADOR { $$ = make_global_var($1, 0); }
+         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' { $$ = make_global_var($1, $3); } ;
 
-funcao_global: header_func_global bloco;
+funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = make_global_func($3, $5, $7); } ;
 
-header_func_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')';
+params_list_global: global_args_list { $$ = $1; }
+                  | %empty { $$ = NULL; } ;
 
-params_list_global: global_args_list
-                  | %empty;
+global_args_list: global_func_arg ',' global_args_list { $$ = $1; $$->nextNode = $3; }
+                | global_func_arg { $$ = $1; } ;
 
-global_args_list: global_args_list ',' global_func_arg
-                | global_func_arg;
+global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = make_param($3); } ;
 
-global_func_arg: const_opcional tipo TK_IDENTIFICADOR;
+bloco: '{' comando_list '}' { $$ = make_block($2); } ;
 
-bloco: '{' comando_list '}';
-
-comando_list: comando ';' comando_list
-        | %empty;
+comando_list: comando ';' comando_list {$$ = $1; $$->nextNode = $3;}
+        | %empty { $$ = NULL; } ;
 
 comando: var_local
        | atrib
@@ -207,16 +203,18 @@ comando: var_local
        | retorno
        | bloco;
 
-var_local: static_opcional const_opcional tipo variavel;
+var_local: static_opcional const_opcional tipo variavel { $$ = $4; } ;
 
-variavel: variavel ',' TK_IDENTIFICADOR
-        | TK_IDENTIFICADOR
-        | TK_IDENTIFICADOR TK_OC_LE lit_ou_id;
+variavel: TK_IDENTIFICADOR init_opcional ',' variavel { $$ = make_local_var(make_identificador($1, NULL), $2); $$->nextNode = $4; }
+        | TK_IDENTIFICADOR init_opcional { $$ = make_local_var(make_identificador($1, NULL), $2); } ;
+
+init_opcional: TK_OC_LE lit_ou_id { $$ = $2; }
+             | %empty { $$ = NULL; } ;
 
 id_expr: TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); }
-       | TK_IDENTIFICADOR '[' expressao ']' { $$ = make_identificador($1, $3); };
+       | TK_IDENTIFICADOR '[' expressao ']' { $$ = make_identificador($1, $3); } ;
 
-atrib: id_expr '=' expressao { $$ = make_attrib($1, $3);}; 
+atrib: id_expr '=' expressao { $$ = make_attrib($1, $3); } ;
 
 fluxo: if
      | for
@@ -226,47 +224,47 @@ if: TK_PR_IF '(' expressao ')' bloco else_opcional { $$ = make_if( $3, $5, $6);}
 else_opcional: TK_PR_ELSE bloco { $$ = make_block($2);}
              | %empty{ $$ = NULL;};
 
-for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco{ $$ = make_for($3,$5,$7,$9);};
+for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco { $$ = make_for($3,$5,$7,$9);};
 
-while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco{ $$ = make_while($3,$6);};
+while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = make_while($3,$6);};
 
-comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = make_input($2); }
+comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = make_input(make_identificador($2, NULL)); }
           | TK_PR_OUTPUT lit_ou_id { $$ = make_output($2);};
 
-func_call: TK_IDENTIFICADOR '(' args_list ')'{ $$ = make_func_call($1, $3);};
+func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = make_func_call($1, $3);};
 
 args_list: id_or_exp_list
-         | %empty { $$ = NULL;};
+         | %empty { $$ = NULL;} ;
 
-id_or_exp_list: id_or_exp_list ',' expressao
-	      | expressao { $$ = $1;};
+id_or_exp_list: expressao ',' id_or_exp_list { $$ = $1; $$->nextNode = $3; }
+	          | expressao { $$ = $1;} ;
 
-shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT
-     | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT;
+shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT { $$ = make_shift_r(make_identificador($1, NULL), make_int($3)); }
+     | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT { $$ = make_shift_l(make_identificador($1, NULL), make_int($3)); } ;
 
-retorno: TK_PR_RETURN expressao { $$ = make_return($2);}
-       | TK_PR_BREAK { $$ = make_break();}
-       | TK_PR_CONTINUE { $$ = make_continue();};
+retorno: TK_PR_RETURN expressao { $$ = make_return($2); }
+       | TK_PR_BREAK { $$ = make_break(); }
+       | TK_PR_CONTINUE { $$ = make_continue(); } ;
 
 lit_ou_id: literal { $$ = $1; }
-	| TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); };
+	| TK_IDENTIFICADOR { $$ = make_identificador($1, NULL); } ;
 
 literal: TK_LIT_INT { $$ = make_int($1); }
        | TK_LIT_FLOAT { $$ = make_float($1); }
        | TK_LIT_FALSE { $$ = make_bool($1); }
        | TK_LIT_TRUE { $$ = make_bool($1); }
        | TK_LIT_CHAR { $$ = make_char($1); }
-       | TK_LIT_STRING { $$ = make_string($1); };
+       | TK_LIT_STRING { $$ = make_string($1); } ;
 
 expressao: 
-	parenteses_ou_operando operador_binario expressao { $$ = make_bin_op($2, $1, $3);}
+	parenteses_ou_operando operador_binario expressao { $$ = make_bin_op($2, $1, $3); }
 	| parenteses_ou_operando { $$ = $1; };
-	
+
 parenteses_ou_operando:
 	'(' expressao ')' { $$ = $2;}
 	| operandos { $$ = $1;}
-	| operador_unario parenteses_ou_operando { make_un_op($1,$2);}
-    | func_call { $$ = $1;};
+	| operador_unario parenteses_ou_operando { make_un_op($1,$2); }
+    | func_call { $$ = $1; } ;
 
 operandos:
 	id_expr { $$ = $1;}
@@ -276,33 +274,30 @@ operandos:
 	| TK_LIT_FALSE { $$ = make_bool($1); };
 
 operador_unario:
-	'+' { $$ = Un_Op_Type.PLUS; }
-	| '-'
-	| '!'
-	| '&'
-	| '*'
-	| '?'
-	| '#';
+	'+' { $$ = PLUS; }
+	| '-' { $$ = MINUS; } 
+	| '!' { $$ = NOT; } 
+	| '&' { $$ = ADDRESS; } 
+	| '*' { $$ = POINTER_VALUE; } 
+	| '?' { $$ = QUESTION_MARK; } 
+	| '#' { $$ = HASH; } ;
 
 operador_binario:
-	'+'
-	| '-'
-	| '*'
-	| '/'
-	| '%'
-	| '|'
-	| '&'
-	| '^'
-	| TK_OC_LE
-	| TK_OC_GE
-	| TK_OC_EQ
-	| TK_OC_NE
-	| TK_OC_AND
-	| TK_OC_OR
-	| TK_OC_SL
-	| TK_OC_SR
+	  '+' { $$ = ADD; } 
+	| '-' { $$ = SUB; } 
+	| '*' { $$ = MUL; } 
+	| '/' { $$ = DIV; } 
+	| '%' { $$ = DIV_REST; } 
+	| '|' { $$ = BIT_OR; } 
+	| '&' { $$ = BIT_AND; } 
+	| '^' { $$ = POW; } 
+	| TK_OC_LE { $$ = LESS_EQ; } 
+	| TK_OC_GE { $$ = GREATER_EQ; } 
+	| TK_OC_EQ { $$ = EQUAL; } 
+	| TK_OC_NE { $$ = N_EQUAL; } 
+	| TK_OC_AND { $$ = AND; } 
+	| TK_OC_OR { $$ = OR; } 
 	| '?' expressao ':';
-
 
 %%
 
