@@ -1,10 +1,45 @@
 
 %{
 #include "parser.tab.h"
+#include <string.h>
+#include <stdlib.h>
+#include "lexVal.h"
+#include "ast.h"
 
-static int column_count = 0;
-void update_line_column();
-void update_strdup(TokenType type);
+int lines = 1;
+
+int createdTokens = 0;
+
+int column_count;
+
+Node *danglingNodes;
+
+int dangInit = FALSE;
+
+
+void initDanglingNodes() {
+	if(dangInit == FALSE) {
+		danglingNodes = createDanglingNode(NULL);
+		dangInit = TRUE;
+	}
+}
+
+void configLexValueNonLiteral(int tokenType){
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines; 
+	yylval.valor_lexico->tokenType = tokenType;
+	yylval.valor_lexico->literalType = NONE;
+	yylval.valor_lexico->tokenInAst = FALSE;
+	yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+}
+
+int get_line_number() {
+	return lines;
+}
+
 
 %}
 
@@ -36,159 +71,153 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 
 %%
 
-"int" { update_line_column(); return TK_PR_INT; }
-"float" { update_line_column(); return TK_PR_FLOAT; }
-"bool" { update_line_column(); return TK_PR_BOOL; }
-"char" { update_line_column(); return TK_PR_CHAR; }
-"string" { update_line_column(); return TK_PR_STRING; }
-"if" { update_line_column(); return TK_PR_IF; }
-"then" { update_line_column(); return TK_PR_THEN; }
-"else" { update_line_column(); return TK_PR_ELSE; }
-"while" { update_line_column(); return TK_PR_WHILE; }
-"do" { update_line_column(); return TK_PR_DO; }
-"input" { update_line_column(); return TK_PR_INPUT; }
-"output" { update_line_column(); return TK_PR_OUTPUT; }
-"return" { update_line_column(); return TK_PR_RETURN; }
-"const" { update_line_column(); return TK_PR_CONST; }
-"static" { update_line_column(); return TK_PR_STATIC; }
-"foreach" { update_line_column(); return TK_PR_FOREACH; }
-"for" { update_line_column(); return TK_PR_FOR; }
-"switch" { update_line_column(); return TK_PR_SWITCH; }
-"case" { update_line_column(); return TK_PR_CASE; }
-"break" { update_line_column(); return TK_PR_BREAK; }
-"continue" { update_line_column(); return TK_PR_CONTINUE; }
-"class" { update_line_column(); return TK_PR_CLASS; }
-"private" { update_line_column(); return TK_PR_PRIVATE; }
-"public" { update_line_column(); return TK_PR_PUBLIC; }
-"protected" { update_line_column(); return TK_PR_PROTECTED; }
-"end" { update_line_column(); return TK_PR_END; }
-"default" { update_line_column(); return TK_PR_DEFAULT; }
+"int" { configLexValueNonLiteral(KEYWORD); return TK_PR_INT; }
+"float" { configLexValueNonLiteral(KEYWORD); return TK_PR_FLOAT; }
+"bool" { configLexValueNonLiteral(KEYWORD); return TK_PR_BOOL; }
+"char" { configLexValueNonLiteral(KEYWORD); return TK_PR_CHAR; }
+"string" { configLexValueNonLiteral(KEYWORD); return TK_PR_STRING; }
+"if" { configLexValueNonLiteral(KEYWORD); return TK_PR_IF; }
+"then" { configLexValueNonLiteral(KEYWORD); return TK_PR_THEN; }
+"else" { configLexValueNonLiteral(KEYWORD); return TK_PR_ELSE; }
+"while" { configLexValueNonLiteral(KEYWORD); return TK_PR_WHILE; }
+"do" { configLexValueNonLiteral(KEYWORD); return TK_PR_DO; }
+"input" { configLexValueNonLiteral(KEYWORD); return TK_PR_INPUT; }
+"output" { configLexValueNonLiteral(KEYWORD); return TK_PR_OUTPUT; }
+"return" { configLexValueNonLiteral(KEYWORD); return TK_PR_RETURN; }
+"const" { configLexValueNonLiteral(KEYWORD); return TK_PR_CONST; }
+"static" { configLexValueNonLiteral(KEYWORD); return TK_PR_STATIC; }
+"foreach" { configLexValueNonLiteral(KEYWORD); return TK_PR_FOREACH; }
+"for" { configLexValueNonLiteral(KEYWORD); return TK_PR_FOR; }
+"switch" { configLexValueNonLiteral(KEYWORD); return TK_PR_SWITCH; }
+"case" { configLexValueNonLiteral(KEYWORD); return TK_PR_CASE; }
+"break" { configLexValueNonLiteral(KEYWORD); return TK_PR_BREAK; }
+"continue" { configLexValueNonLiteral(KEYWORD); return TK_PR_CONTINUE; }
+"class" { configLexValueNonLiteral(KEYWORD); return TK_PR_CLASS; }
+"private" { configLexValueNonLiteral(KEYWORD); return TK_PR_PRIVATE; }
+"public" { configLexValueNonLiteral(KEYWORD); return TK_PR_PUBLIC; }
+"protected" { configLexValueNonLiteral(KEYWORD); return TK_PR_PROTECTED; }
+"end" { configLexValueNonLiteral(KEYWORD); return TK_PR_END; }
+"default" { configLexValueNonLiteral(KEYWORD); return TK_PR_DEFAULT; }
 
-"<=" { update_line_column();
-    yylval.valor_lexico.tipo = OP_COMPOSTO;
-    yylval.valor_lexico.valor.bin_op = LESS_EQ;
-    return TK_OC_LE; }
+"<=" { configLexValueNonLiteral(COMP_OPER); return TK_OC_LE; }
 
-">=" { update_line_column();
-    yylval.valor_lexico.tipo = OP_COMPOSTO;
-    yylval.valor_lexico.valor.bin_op = GREATER_EQ;
-    return TK_OC_GE; }
+">=" { configLexValueNonLiteral(COMP_OPER); return TK_OC_GE; }
 
-"==" { update_line_column(); 
-    yylval.valor_lexico.tipo = OP_COMPOSTO;
-    yylval.valor_lexico.valor.bin_op = EQUAL;
-    return TK_OC_EQ; }
+"==" { configLexValueNonLiteral(COMP_OPER); return TK_OC_EQ; }
 
-"!=" { update_line_column(); 
-    yylval.valor_lexico.tipo = OP_COMPOSTO;
-    yylval.valor_lexico.valor.bin_op = N_EQUAL;
-    return TK_OC_NE; }
+"!=" { configLexValueNonLiteral(COMP_OPER); return TK_OC_NE; }
 
-"&&" { update_line_column(); 
-    yylval.valor_lexico.tipo = OP_COMPOSTO;
-    yylval.valor_lexico.valor.bin_op = AND;
-    return TK_OC_AND; }
+"&&" { configLexValueNonLiteral(COMP_OPER); return TK_OC_AND; }
 
-"||" { update_line_column(); 
-    yylval.valor_lexico.tipo = OP_COMPOSTO;
-    yylval.valor_lexico.valor.bin_op = OR;
-    return TK_OC_OR; }
+"||" { configLexValueNonLiteral(COMP_OPER); return TK_OC_OR; }
 
-">>" { update_line_column(); 
-    return TK_OC_SR; }
+">>" { configLexValueNonLiteral(COMP_OPER); return TK_OC_SR; }
 
-"<<" { update_line_column();
-    return TK_OC_SL; }
+"<<" { configLexValueNonLiteral(COMP_OPER); return TK_OC_SL; }
 
-{intlit} { update_line_column();
-    yylval.valor_lexico.tipo = INT_LITERAL;
-    yylval.valor_lexico.valor.int_lit = atoi(yytext);
-    return TK_LIT_INT; }
-{floatlit} { update_line_column();
-    yylval.valor_lexico.tipo = FLOAT_LITERAL;
-    yylval.valor_lexico.valor.float_lit = atof(yytext);
-    return TK_LIT_FLOAT; }
-false { update_line_column();
-    yylval.valor_lexico.tipo = BOOL_LITERAL;
-    yylval.valor_lexico.valor.bool_lit = false;
-    return TK_LIT_FALSE; }
-true { update_line_column();
-    yylval.valor_lexico.tipo = BOOL_LITERAL;
-    yylval.valor_lexico.valor.bool_lit = true;
-    return TK_LIT_TRUE; }
+{intlit} { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = LITERAL;
+	yylval.valor_lexico->literalType = INT;
+	yylval.valor_lexico->value.i = atoi(yytext);
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+	return TK_LIT_INT;  }
+{floatlit} { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = LITERAL;
+	yylval.valor_lexico->literalType = FLOAT;
+	yylval.valor_lexico->value.i = atoi(yytext);
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+	return TK_LIT_INT; }
+false { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = LITERAL;
+	yylval.valor_lexico->literalType = BOOL;
+	yylval.valor_lexico->value.b = FALSE;
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+	return TK_LIT_TRUE; }
+true { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = LITERAL;
+	yylval.valor_lexico->literalType = BOOL;
+	yylval.valor_lexico->value.b = TRUE;
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+	return TK_LIT_TRUE;  }
 
-'({asciialphabet}|{controlchar})' { update_line_column();
-                                    update_strdup(CHAR_LITERAL);
-                                    return TK_LIT_CHAR; }
+'({asciialphabet}|{controlchar})' { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = LITERAL;
+	yylval.valor_lexico->literalType = CHAR;
+	yylval.valor_lexico->value.str = strdup(yytext);
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+	return TK_LIT_CHAR; }
 
-\"[^\"\n]*\" { update_line_column();
-            update_strdup(STRING_LITERAL);
-            return TK_LIT_STRING; }
+\"[^\"\n]*\" { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = LITERAL;
+	yylval.valor_lexico->literalType = STRING;
+	yylval.valor_lexico->value.str = strdup(yytext);
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+	return TK_LIT_STRING; }
 
-{id} { update_line_column();
-        update_strdup(ID);
-        return TK_IDENTIFICADOR; }
+{id} { 
+	configLexValueNonLiteral(IDS);
+	return TK_IDENTIFICADOR; }
 
-{char_esp} { update_line_column();
-            update_strdup(CHAR_ESPECIAL);
-            return yytext[0]; }
-{linebreak} { update_line_column(); }
+{char_esp} { 
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines;
+	yylval.valor_lexico->tokenType = SPEC_CHAR;
+	yylval.valor_lexico->literalType = NONE;
+	yylval.valor_lexico->value.c = yytext[0];
+	yylval.valor_lexico->tokenInAst = FALSE;
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+    return *yytext; }
+{linebreak} { ++lines; }
 
-{white} { update_line_column(); }
+{white} { }
 
-{inlinecomment} { update_line_column(); }
+{inlinecomment} { }
 
-{block_start} { update_line_column(); BEGIN(MULTILINE_COMMENT); }
-<MULTILINE_COMMENT>{block_end} { update_line_column(); BEGIN(INITIAL); }
-<MULTILINE_COMMENT>{linebreak} { update_line_column();  }
-<MULTILINE_COMMENT>. { update_line_column(); }
+{block_start} { BEGIN(MULTILINE_COMMENT); }
+<MULTILINE_COMMENT>{block_end} {  BEGIN(INITIAL); }
+<MULTILINE_COMMENT>{linebreak} { }
+<MULTILINE_COMMENT>. { }
 
 
-. { update_line_column(); return TOKEN_ERRO; }
+. {return TOKEN_ERRO; }
 
 
 %%
 
-int get_line_number() {
-    return yylineno;
-}
 
 int get_column_number() {
     return column_count;
 }
 
-void update_line_column() {
-    int i;
-
-    for(i=0; yytext[i] != '\0'; i++) {
-        if(yytext[i] == '\n') {
-            column_count = 0;
-        } else {
-            column_count++;
-        }
-    }
-
-    yylval.valor_lexico.line = yylineno;
-    yylval.valor_lexico.col = column_count;
-}
-
-void update_strdup(TokenType type) {
-    yylval.valor_lexico.tipo = type;
-
-    switch(type) {
-        case CHAR_LITERAL:
-            yylval.valor_lexico.valor.char_lit = yytext[0];
-            break;
-        case STRING_LITERAL:
-            yylval.valor_lexico.valor.string_lit = strdup(yytext);
-            break;
-        case ID:
-            yylval.valor_lexico.valor.identificador = strdup(yytext);
-            break;
-        case CHAR_ESPECIAL:
-            yylval.valor_lexico.valor.char_especial = yytext[0];
-            break;
-        default:
-            break;
-    }
-}
