@@ -1,16 +1,10 @@
-#ifndef LEXVAL_H //usado para evitar múltiplas inclusões desse arquivo que também será incluso em outros headers
+#ifndef LEXVAL_H
 #define LEXVAL_H 
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-//Tipo do token não é um tipo de dado, mas os tipos definidos pelo
-//analisador léxico, ou seja:
-// 1) Palavra reservada
-// 2) Caracteres especiais
-// 3) operadores compostos
-// 4) Identificadores
-// 5) Literais
-// Portanto o tipo do token será representado por um inteiro que será um dos valores definidos a seguir.
+
 /*******TIPOS DE TOKENS*******/
 #define KEYWORD 0x0
 #define SPEC_CHAR 0x1
@@ -36,7 +30,7 @@
 #define TRUE 1
 
 
-//Definição da union que representa o valor dos tokens
+//Valores dos tokens
 union Value{
 	int i;
 	float f;
@@ -50,7 +44,7 @@ struct lexval{
 	int lineNumber; 
 	int tokenType; 
 	int literalType;
-	union Value value; //um dos campos da union acima
+	union Value value; 
 };
 
 #endif //LEXVAL_H

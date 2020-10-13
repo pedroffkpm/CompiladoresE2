@@ -21,7 +21,9 @@ Node* createNode(struct lexval *token, int tokenType) {
 	++createdNodes;
 	if(token != NULL) {
 		token->tokenInAst = TRUE;
-	}
+	} //else {
+		//token->tokenInAst = FALSE;
+	//}
 	Node* node = malloc(sizeof(Node));
 	node->token = token;
 	node->kidsNumber = 0;
@@ -74,7 +76,11 @@ void printTree(Node* node) {
 	int i = 0;
 	if(node != NULL) {
 		while(i < node->kidsNumber) {
-			printf("%p, %p\n", node, node->kids[i]);		
+			if(node->kids[i]->token != NULL) {
+				//if(node->kids[i]->token->tokenInAst) {
+				printf("%p, %p\n", node, node->kids[i]);
+				//}
+			}		
 			i++;
 		}
 	}
@@ -121,7 +127,9 @@ void printTokenLabel(Node* node) {
 				case STRING:
 					printf("%s ", node->token->value.str);
 					break;
+			break;
 			}
+			break;
 		case VEC_INDEX:
 			printf("[label=\"[]\"];\n");
 			break;
