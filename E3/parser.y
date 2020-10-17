@@ -11,7 +11,7 @@ extern void * arvore;
 
 extern int get_line_number(void);
 
-// extern int get_column_number(void);
+extern int get_column_number(void);
 
 int yylex(void);
 
@@ -155,7 +155,7 @@ extern Node *danglingNodes;
 
 %%
 programa:
-		componentes { $$ = $1; arvore = $$; parsingSucceded = TRUE; };
+		componentes { $$ = $1; arvore = $$; parsingSucceded = TRUE;};
 
 componentes: 
 	declaracao { $$ = $1; }
@@ -173,13 +173,13 @@ const_opcional:
 	TK_PR_CONST { }
         | %empty{ };
 
-tipo: TK_PR_INT { }
+tipo: TK_PR_INT {}
     | TK_PR_FLOAT { }
-    | TK_PR_CHAR { }
+    | TK_PR_CHAR {  }
     | TK_PR_BOOL { }
     | TK_PR_STRING { };
 
-var_global: static_opcional tipo ids ';' { $$ = $3; }; //reservada
+var_global: static_opcional tipo ids ';' { $$ = $3; } ; //reservada
 
 ids: id_global ',' ids {$$ = $1; 
 								addChild($$, $3); }
@@ -356,7 +356,7 @@ operador_ternario:
 %%
 
     int yyerror (char const *s){
-	printf("Line %d:\t%s\n", get_line_number(), s);
+	printf("Line %d, Column %d:\t%s\n", get_line_number(), get_column_number(), s);
 
     return -1;
 }

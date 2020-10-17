@@ -3,17 +3,42 @@
 #include "parser.tab.h"
 #include <string.h>
 #include <stdlib.h>
-#include "lexVal.h" //puxa a bib <stdbool.h> -> permite usar o tipo bool e false/true
+#include "lexVal.h"
 #include "ast.h"
 
+int lines = 1;
+
 int createdTokens = 0;
-bool dangInit = false;
+
+int column_count;
 
 Node *danglingNodes;
 
-void initDanglingNodes();
-void configLexValueNonLiteral(int tokenType);
-int get_line_number();
+int dangInit = FALSE;
+
+
+void initDanglingNodes() {
+	if(dangInit == FALSE) {
+		danglingNodes = createDanglingNode(NULL);
+		dangInit = TRUE;
+	}
+}
+
+void configLexValueNonLiteral(int tokenType){
+	initDanglingNodes();
+	createdTokens++;
+	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+	yylval.valor_lexico->lineNumber = lines; 
+	yylval.valor_lexico->tokenType = tokenType;
+	yylval.valor_lexico->literalType = NONE;
+	yylval.valor_lexico->tokenInAst = FALSE;
+	yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
+	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
+}
+
+int get_line_number() {
+	return lines;
+}
 
 
 %}
@@ -94,7 +119,7 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = INT;
 	yylval.valor_lexico->value.i = atoi(yytext);
@@ -105,7 +130,7 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = FLOAT;
 	yylval.valor_lexico->value.i = atoi(yytext);
@@ -116,7 +141,7 @@ false {
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = BOOL;
 	yylval.valor_lexico->value.b = FALSE;
@@ -127,7 +152,7 @@ true {
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = BOOL;
 	yylval.valor_lexico->value.b = TRUE;
@@ -139,7 +164,7 @@ true {
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = CHAR;
 	yylval.valor_lexico->value.str = strdup(yytext);
@@ -151,7 +176,7 @@ true {
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = STRING;
 	yylval.valor_lexico->value.str = strdup(yytext);
@@ -167,14 +192,14 @@ true {
 	initDanglingNodes();
 	createdTokens++;
 	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number();
+	yylval.valor_lexico->lineNumber = lines;
 	yylval.valor_lexico->tokenType = SPEC_CHAR;
 	yylval.valor_lexico->literalType = NONE;
 	yylval.valor_lexico->value.c = yytext[0];
 	yylval.valor_lexico->tokenInAst = FALSE;
 	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
     return *yytext; }
-{linebreak} { }
+{linebreak} { ++lines; }
 
 {white} { }
 
@@ -191,26 +216,8 @@ true {
 
 %%
 
-void initDanglingNodes() {
-	if(dangInit == FALSE) {
-		danglingNodes = createDanglingNode(NULL);
-		dangInit = TRUE;
-	}
-}
 
-void configLexValueNonLiteral(int tokenType) {
-	initDanglingNodes();
-	createdTokens++;
-	yylval.valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
-	yylval.valor_lexico->lineNumber = get_line_number(); 
-	yylval.valor_lexico->tokenType = tokenType;
-	yylval.valor_lexico->literalType = NONE;
-	yylval.valor_lexico->tokenInAst = FALSE;
-	yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
-	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
-}
-
-int get_line_number() {
-	return yylineno;
+int get_column_number() {
+    return column_count;
 }
 
