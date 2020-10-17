@@ -154,12 +154,12 @@ void freeDanglingScanner(Node* node) {
 		}
 		free(node->kids);
 		if(node->token != NULL) {
-			if(!node->token->tokenInAst) {
+			if(node->token->tokenInAst == FALSE) {
 				if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING)) {
 					free(node->token->value.str);
 				}
+				free(node->token);
 			}
-			free(node->token);
 		}
 		free(node);
 	}
