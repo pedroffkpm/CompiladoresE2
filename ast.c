@@ -7,6 +7,7 @@ int treePrinted = FALSE;
 int createdNodes = 0;
 int rootNodes = 0;
 
+extern int parsingSucceded;
 extern Node *danglingNodes;
 
 
@@ -185,6 +186,8 @@ void libera(void* voidNode);
 void exporta(void* voidNode) {
 	Node* node = (Node*)voidNode;
 	int i = 0;
+	if(parsingSucceded == FALSE)
+		return;
 	if(!treePrinted) {
 		treePrinted = TRUE;
 		printTree(node);
