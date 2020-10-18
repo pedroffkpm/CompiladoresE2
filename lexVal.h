@@ -44,7 +44,9 @@ typedef enum {
 	BIN_OP,
 	TER_OP,
 	INPUT,
-	OUTPUT
+	OUTPUT,
+	VEC_ID,
+	VEC_IND
 
 } Nature;
 

@@ -192,12 +192,13 @@ ids: id_global ',' ids {$$ = $1;
 id_global: TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								addNature($$, VAR); }
          | TK_IDENTIFICADOR '[' TK_LIT_INT ']' { $$ = createNode($2, VEC_INDEX);
+								addNature($$, VECTOR);
 								Node *node1 = createNode($1, NONE);
-								addNature(node1, VECTOR);
+								addNature(node1, VEC_ID);
 								addChild($$, node1);
 								Node *node2 = createNode($3, NONE);
 								addType(node2, INT_TYPE);
-								addNature(node2, LIT_INT); 
+								addNature(node2, VEC_IND); 
 								addChild($$, node2); } ;
 
 funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = createNode($3, NONE); //reservada
@@ -251,10 +252,12 @@ init_opcional: TK_OC_LE lit_ou_id { $$ = createNode($1, NONE);
 id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								addNature($$, VAR); }
        | TK_IDENTIFICADOR '[' expressao ']' { $$ = createNode($2, VEC_INDEX);
+								addNature($$, VECTOR);
 								Node *node = createNode($1, NONE);
-								addNature(node, VECTOR);
+								addNature(node, VEC_IND);
 								addType(node, $3->token->varType);
-								addChild($$, node); 
+								addChild($$, node);
+								addNature($3, VEC_ID); 
 								addChild($$, $3); } ;
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
