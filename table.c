@@ -89,8 +89,64 @@ void popTable() {
     }
 }
 
-void addSymbol(Nature nature, Type type, Param **params, struct lexval *valor_lexico) {
-    //?
+char* boolString(bool b) {
+    return b ? "true" : "false"
+}
+
+char* makeKey(int keysize, Nature nature, struct lexval *valor_lexico) {
+    char* key = malloc((sizeof(char)) * keysize);
+
+    switch (nature)
+    {
+    case LIT_INT:
+        snprintf(key, keysize, "%d", valor_lexico->value.i);
+        break;
+    case LIT_FLOAT:
+        snprintf(key, keysize, "%f", valor_lexico->value.f);
+        break;
+    case LIT_BOOL:
+        snprintf(key, keysize, "%s", boolString(valor_lexico->value.b));
+        break;
+    case LIT_CHAR:
+        snprintf(key, keysize, "%c", valor_lexico->value.c);
+        break;
+    case VAR:
+    case FUNCTION:
+    case LIT_STRING:
+        snprintf(key, keysize, "%s", valor_lexico->value.str);
+        break;
+    default:
+        break;
+    }
+
+    return key;
+}
+
+void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param **params, struct lexval *valor_lexico) {
+
+    int keysize = 50;
+    char* key = makeKey(keysize, nature, valor_lexico);
+
+    int index = hashFunction(key);
+
+    while(currentScope->elements[index] != NULL) {
+        ++index;
+        index %= HASH_SIZE; 
+    }
+
+    currentScope->elements[index] = (Symbol*) malloc(sizeof(Symbol));
+    currentScope->elements[index]->key = (char*) malloc(sizeof(char) * keysize);
+    snprintf(currentScope->elements[index]->key, keysize, "%s", key);
+    free(key);
+
+    currentScope->elements[index]->line = valor_lexico->lineNumber;
+    // currentScope->elements[index]->nature = valor_lexico->nature;
+    currentScope->elements[index]->n_params = paramSize;
+    currentScope->elements[index]->params = params;
+    currentScope->elements[index]->type = type;
+    currentScope->elements[index]->size = inferSizeForType(type, vecSize);
+    currentScope->elements[index]->valor_lexico = valor_lexico;
+
 }
 
 Symbol* getSymbol(char *key) {

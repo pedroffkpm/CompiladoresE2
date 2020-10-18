@@ -14,7 +14,6 @@ typedef enum {
     LIT_STRING,
     LIT_BOOL,
     VAR,
-    VECTOR,
     FUNCTION,
 
 } Nature;
@@ -58,7 +57,7 @@ SymbolTable* createTable();
 void pushTable();
 void popTable();
 
-void addSymbol(Nature nature, Type type, Param** params, struct lexval* valor_lexico);
+void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param** params, struct lexval* valor_lexico);
 
 Symbol* getSymbol(char* key);
 
