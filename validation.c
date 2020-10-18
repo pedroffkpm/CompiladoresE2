@@ -42,6 +42,12 @@ char* errorMessage(int errorcode) {
     case ERR_FUNCTION: //SIMPLE ERROR
         return "Function, but expected vector or variable";
         break;
+    case ERR_MISSING_ARGS: //SIMPLE ERROR
+        return "Missing Args for function";
+        break;
+    case ERR_EXCESS_ARGS: //SIMPLE ERROR
+        return "Too many Args for function";
+        break;
     case ERR_WRONG_TYPE: //TYPE ERROR
         return "Wrong Type"; //deve vir uma msg "expected X but got Y" depois
         break;
@@ -66,12 +72,6 @@ char* errorMessage(int errorcode) {
     case ERR_STRING_SIZE: //SIZE ERROR
         return "Incompatible size for String";
         break;
-    case ERR_MISSING_ARGS: //SIZE ERROR
-        return "Missing Args for function"; //opctionalmente: "expected x, but got y"
-        break;
-    case ERR_EXCESS_ARGS: //SIZE ERROR
-        return "Too many Args for function"; //opctionalmente: "expected x, but got y"
-        break;
     case ERR_WRONG_PAR_SHIFT: //SHIFT ERROR
         return "Wrong value for shift";
         break;
@@ -80,11 +80,8 @@ char* errorMessage(int errorcode) {
     }
 }
 
-void printSimpleError(int errorcode, Node* node, Symbol* symbol) {
-    int lineNumber = symbol == NULL ? (node == NULL ? -1 : node->token->lineNumber) : symbol->line;
-    char* str = node == NULL ? (symbol == NULL ? "" : symbol->key ) : node->token->value.str;
-
-    printf("Line %d:on %s\n\tERROR\t %s\n", lineNumber, str, errorMessage(errorcode));
+void printSimpleError(int errorcode, int lineNumber, char* name) {
+    printf("Line %d:on %s\n\tERROR\t %s\n", lineNumber, name, errorMessage(errorcode));
 }
 
 void printTypeError(int errorcode, int lineNumber, Type expected, Type real, char* name) {
@@ -119,12 +116,12 @@ void validateProgram(void* arvore) {
 void validateVar(Node* node) {
     Symbol* s = getSymbol(node->token->value.str);
     if (s == NULL) {
-        printSimpleError(ERR_UNDECLARED, node, s);
+        printSimpleError(ERR_UNDECLARED, node->token->lineNumber, node->token->value.str);
         exit(ERR_UNDECLARED);
     }
 
     if(s->nature == FUNCTION) {
-        printSimpleError(ERR_FUNCTION, node, s);
+        printSimpleError(ERR_FUNCTION, node->token->lineNumber, node->token->value.str);
         exit(ERR_FUNCTION);
     }
 
