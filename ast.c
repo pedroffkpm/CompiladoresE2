@@ -27,6 +27,8 @@ Node* createNode(struct lexval *token, int tokenType) {
 	//}
 	Node* node = malloc(sizeof(Node));
 	node->token = token;
+	node->token->nature = -1;
+	node->token->varType = -1;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
 	if(tokenType != NONE)
@@ -40,6 +42,29 @@ Node* createDanglingNode(struct lexval* token) {
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
 	return node;
+}
+
+void addType(Node *node, Type type){
+	node->token->varType = type;
+	return;
+}
+
+void addTypeRec(Node *node, Type type) {
+	int i = 0;
+	if(node != NULL) {
+		if(node->token->varType == -1)
+			addType(node, type);
+		while(i < node->kidsNumber) {
+			addTypeRec(node->kids[i], type);
+			++i;
+		}
+	}
+	return;
+}
+
+void addNature(Node *node, Nature nature) {
+	node->token->nature = nature;
+	return;
 }
 
 void addChild(Node* father, Node* child) {

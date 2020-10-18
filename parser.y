@@ -1,8 +1,8 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "lex.yy.h"	
 #include "lexVal.h"
+#include "lex.yy.h"	
 #include "ast.h"
     
 #define YYERROR_VERBOSE 1
@@ -20,22 +20,25 @@ int yyerror (char const *s);
 int parsingSucceded = FALSE;
 
 extern Node *danglingNodes;
+
+
 %}
 
 %union {
 	struct lexval* valor_lexico;
 	struct node* ast;
+	Type type;
 }
 
 %define parse.error verbose
 
 //TERMINAIS (token)
 
-%token  TK_PR_INT
-%token  TK_PR_FLOAT
-%token  TK_PR_BOOL
-%token  TK_PR_CHAR
-%token  TK_PR_STRING
+%token <type> TK_PR_INT
+%token <type> TK_PR_FLOAT
+%token <type> TK_PR_BOOL
+%token <type> TK_PR_CHAR
+%token <type> TK_PR_STRING
 %token <valor_lexico> TK_PR_IF
 %token <valor_lexico> TK_PR_THEN
 %token <valor_lexico> TK_PR_ELSE
@@ -126,7 +129,7 @@ extern Node *danglingNodes;
 %type <ast> operador_unario
 %type <ast> operador_binario
 %type <ast> operador_ternario
-//%type <ast> tipo
+%type <type> tipo
 
 %destructor {} <valor_lexico>
 %destructor {
@@ -173,25 +176,33 @@ const_opcional:
 	TK_PR_CONST { }
         | %empty{ };
 
-tipo: TK_PR_INT { }
-    | TK_PR_FLOAT { }
-    | TK_PR_CHAR { }
-    | TK_PR_BOOL { }
-    | TK_PR_STRING { };
+tipo: TK_PR_INT { $$ = INT_TYPE; }
+    | TK_PR_FLOAT { $$ = FLOAT_TYPE;}
+    | TK_PR_CHAR { $$ = CHAR_TYPE;}
+    | TK_PR_BOOL { $$ = BOOL_TYPE;}
+    | TK_PR_STRING { $$ = STRING_TYPE;};
 
-var_global: static_opcional tipo ids ';' { $$ = $3; }; //reservada
+var_global: static_opcional tipo ids ';' { $$ = $3; 
+								addTypeRec($$, $2);}; //reservada
 
 ids: id_global ',' ids {$$ = $1; 
 								addChild($$, $3); }
    | id_global { $$ = $1; } ;
 
-id_global: TK_IDENTIFICADOR { $$ = createNode($1, NONE); }
-         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' { $$ = createNode($1, NONE);
-								Node* node = createNode($2, VEC_INDEX);
-								addChild(node, createNode($3, NONE));
-								addChild($$, node); } ;
+id_global: TK_IDENTIFICADOR { $$ = createNode($1, NONE);
+								addNature($$, VAR); }
+         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' { $$ = createNode($2, VEC_INDEX);
+								Node *node1 = createNode($1, NONE);
+								addNature(node1, VECTOR);
+								addChild($$, node1);
+								Node *node2 = createNode($3, NONE);
+								addType(node2, INT_TYPE);
+								addNature(node2, LIT_INT); 
+								addChild($$, node2); } ;
 
 funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = createNode($3, NONE); //reservada
+								addType($$, $2);
+								addNature($$, FUNCTION);
 								addChild($$, $5);
 								addChild($$, $7); } ;
 
@@ -202,7 +213,9 @@ global_args_list: global_func_arg ',' global_args_list { $$ = $1;
 								addChild($$, $3); }
                 | global_func_arg { $$ = $1; } ;
 
-global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createNode($3, NONE); } ; //reservada
+global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createNode($3, NONE);
+								addType($$, $2);
+								addNature($$, VAR); } ; //reservada
 
 bloco: '{' comando_list '}' { $$ = $2; }; 
 	//|comando { $$ = $1; };
@@ -220,23 +233,29 @@ comando: var_local { $$ = $1; }
        | retorno { $$ = $1; }
        | bloco { $$ = $1; };
 
-var_local: static_opcional const_opcional tipo variavel { $$ = $4; } ; //reservada
+var_local: static_opcional const_opcional tipo variavel { $$ = $4;
+								addType($$, $3); } ; //reservada
 
-variavel: TK_IDENTIFICADOR init_opcional ',' variavel { $$ = createNode($1, NONE);
+variavel: TK_IDENTIFICADOR init_opcional ',' variavel { $$ = createNode($1, NONE); //observar(talvez inverter)
+								addNature($$, VAR);
 								addChild($$, $2);
 								addChild($$, $4); }
         | TK_IDENTIFICADOR init_opcional { $$ = createNode($1, NONE);
+								addNature($$, VAR);
 								addChild($$, $2); } ;
 
 init_opcional: TK_OC_LE lit_ou_id { $$ = createNode($1, NONE);
 								addChild($$, $2); }
              | %empty { $$ = createNode(NULL, NONE); } ;
 
-id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE); }
-       | TK_IDENTIFICADOR '[' expressao ']' { $$ = createNode($1, NONE);
-								Node* node = createNode($2, VEC_INDEX);
-								addChild($$, node);
-								addChild(node, $3);} ;
+id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);
+								addNature($$, VAR); }
+       | TK_IDENTIFICADOR '[' expressao ']' { $$ = createNode($2, VEC_INDEX);
+								Node *node = createNode($1, NONE);
+								addNature(node, VECTOR);
+								addType(node, $3->token->varType);
+								addChild($$, node); 
+								addChild($$, $3); } ;
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
 								addChild($$, $1);
@@ -265,11 +284,14 @@ while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = createNode($1, NON
 								addChild($$, $6);};
 
 comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
-								addChild($$, createNode($2, NONE)); }
+								Node *node = createNode($2, NONE);
+								addNature(node, VAR);
+								addChild($$, node); }
           | TK_PR_OUTPUT lit_ou_id { $$ = createNode($1, NONE);
 								addChild($$, $2);};
 
 func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = createNode($1, F_CALL);
+								addNature($$, FUNCTION);
 								addChild($$, $3);};
 
 args_list: id_or_exp_list { $$ = $1;}
@@ -280,33 +302,60 @@ id_or_exp_list: expressao ',' id_or_exp_list { $$ = $1;
 	          | expressao { $$ = $1;} ;
 
 shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
-								addChild($$, createNode($1, NONE));
-								addChild($$, createNode($3, NONE)); }
+								Node *node1 = createNode($1, NONE);
+								addNature(node1, VAR);
+								addType(node1, INT_TYPE);
+								addChild($$, node1);
+								Node *node2 = createNode($3, NONE);
+								addNature(node2, LIT_INT);
+								addType(node2, INT_TYPE);
+								addChild($$, node2); }
      | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT { $$ = createNode($2, NONE);
-								addChild($$, createNode($1, NONE));
-								addChild($$, createNode($3, NONE)); } ;
+								Node *node1 = createNode($1, NONE);
+								addNature(node1, VAR);
+								addType(node1, INT_TYPE);
+								addChild($$, node1);
+								Node *node2 = createNode($3, NONE);
+								addNature(node2, LIT_INT);
+								addType(node2, INT_TYPE);
+								addChild($$, node2); }
 
 retorno: TK_PR_RETURN expressao { $$ = createNode($1, NONE); 
 								addChild($$, $2);}
 	|TK_PR_RETURN { $$ = createNode($1, NONE); }
-       | TK_PR_BREAK { $$ = createNode($1, NONE); }
-       | TK_PR_CONTINUE { $$ = createNode($1, NONE); } ;
+       	| TK_PR_BREAK { $$ = createNode($1, NONE); }
+       	| TK_PR_CONTINUE { $$ = createNode($1, NONE); } ;
 
 lit_ou_id: literal { $$ = $1; }
-	| TK_IDENTIFICADOR { $$ = createNode($1, NONE); } ;
+	| TK_IDENTIFICADOR { $$ = createNode($1, NONE);
+								addNature($$, VAR); } ;
 
-literal: TK_LIT_INT { $$ = createNode($1, NONE); }
-       | TK_LIT_FLOAT { $$ = createNode($1, NONE); }
-       | TK_LIT_FALSE { $$ = createNode($1, NONE); }
-       | TK_LIT_TRUE { $$ = createNode($1, NONE); }
-       | TK_LIT_CHAR { $$ = createNode($1, NONE); }
-       | TK_LIT_STRING { $$ = createNode($1, NONE); } ;
+literal: TK_LIT_INT { $$ = createNode($1, NONE);
+								addNature($$, LIT_INT);
+								addType($$, INT_TYPE); }
+       	| TK_LIT_FLOAT { $$ = createNode($1, NONE);
+								addNature($$, LIT_FLOAT);
+								addType($$, FLOAT_TYPE); }
+       	| TK_LIT_FALSE { $$ = createNode($1, NONE);
+								addNature($$, LIT_BOOL);
+								addType($$, BOOL_TYPE); }
+       	| TK_LIT_TRUE { $$ = createNode($1, NONE);
+								addNature($$, LIT_BOOL);
+								addType($$, BOOL_TYPE); }
+       	| TK_LIT_CHAR { $$ = createNode($1, NONE);
+								addNature($$, LIT_CHAR);
+								addType($$, CHAR_TYPE); }
+       	| TK_LIT_STRING { $$ = createNode($1, NONE);
+								addNature($$, LIT_STRING);
+								addType($$, STRING_TYPE); } ;
 
 expressao: 
 	parenteses_ou_operando operador_binario expressao { $$ = $2;
+								addType($$, $1->token->varType);
 								addChild($$, $1);
 								addChild($$, $3); }
 	|parenteses_ou_operando operador_ternario expressao { $$ = $2;
+								addType($$, $3->token->varType);
 								addChild($$, $1);
 								addChild($$, $3); }
 	| parenteses_ou_operando { $$ = $1; };
@@ -314,15 +363,24 @@ expressao:
 parenteses_ou_operando:
 	'(' expressao ')' { $$ = $2;}
 	| operandos { $$ = $1;}
-	| operador_unario parenteses_ou_operando { $$ = $1, addChild($$, $2); }
-    | func_call { $$ = $1; } ;
+	| operador_unario parenteses_ou_operando { $$ = $1, addChild($$, $2);
+								addType($$, $2->token->varType); }
+   	| func_call { $$ = $1; } ;
 
 operandos:
 	id_expr { $$ = $1;}
-	| TK_LIT_INT { $$ = createNode($1, NONE); }
-	| TK_LIT_FLOAT { $$ = createNode($1, NONE); }
-	| TK_LIT_TRUE { $$ = createNode($1, NONE); }
-	| TK_LIT_FALSE { $$ = createNode($1, NONE); };
+	| TK_LIT_INT { $$ = createNode($1, NONE);
+								addNature($$, LIT_INT);
+								addType($$, INT_TYPE); }
+       	| TK_LIT_FLOAT { $$ = createNode($1, NONE);
+								addNature($$, LIT_FLOAT);
+								addType($$, FLOAT_TYPE); }
+       	| TK_LIT_FALSE { $$ = createNode($1, NONE);
+								addNature($$, LIT_BOOL);
+								addType($$, BOOL_TYPE); }
+       	| TK_LIT_TRUE { $$ = createNode($1, NONE);
+								addNature($$, LIT_BOOL);
+								addType($$, BOOL_TYPE); };
 
 operador_unario:
 	'+' { $$ = createNode($1, NONE); }

@@ -20,6 +20,12 @@ Node* createDanglingNode(struct lexval* token);
 
 void addChild(Node *pai, Node *kid);
 
+void addType(Node *node, Type type);
+
+void addTypeRec(Node *node, Type type);
+
+void addNature(Node *node, Nature nature);
+
 void printToken(Node* node);
 
 void exporta(void *voidNode);

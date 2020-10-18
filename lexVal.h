@@ -29,6 +29,27 @@
 #define FALSE 0
 #define TRUE 1
 
+//tipo e natureza de um token
+typedef enum {
+    LIT_INT,
+    LIT_FLOAT,
+    LIT_CHAR,
+    LIT_STRING,
+    LIT_BOOL,
+    VAR,
+    VECTOR,
+    FUNCTION
+
+} Nature;
+
+typedef enum {
+    INT_TYPE,
+    FLOAT_TYPE,
+    CHAR_TYPE,
+    STRING_TYPE,
+    BOOL_TYPE
+} Type;
+
 
 //Valores dos tokens
 union Value{
@@ -44,7 +65,10 @@ struct lexval{
 	int lineNumber; 
 	int tokenType; 
 	int literalType;
+	Type varType;
+	Nature nature;
 	union Value value; 
 };
+
 
 #endif //LEXVAL_H
