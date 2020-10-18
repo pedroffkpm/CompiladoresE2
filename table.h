@@ -7,24 +7,24 @@
 
 #define HASH_SIZE 9973
 
-typedef enum {
-    LIT_INT,
-    LIT_FLOAT,
-    LIT_CHAR,
-    LIT_STRING,
-    LIT_BOOL,
-    VAR,
-    FUNCTION,
+// typedef enum {
+//     LIT_INT,
+//     LIT_FLOAT,
+//     LIT_CHAR,
+//     LIT_STRING,
+//     LIT_BOOL,
+//     VAR,
+//     FUNCTION,
 
-} Nature;
+// } Nature;
 
-typedef enum {
-    INT_TYPE,
-    FLOAT_TYPE,
-    CHAR_TYPE,
-    STRING_TYPE,
-    BOOL_TYPE
-} Type;
+// typedef enum {
+//     INT_TYPE,
+//     FLOAT_TYPE,
+//     CHAR_TYPE,
+//     STRING_TYPE,
+//     BOOL_TYPE
+// } Type;
 
 typedef struct Param
 {

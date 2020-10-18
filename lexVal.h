@@ -30,7 +30,7 @@
 #define TRUE 1
 
 //tipo e natureza de um token
-typedef enum {
+typedef enum Nature {
     LIT_INT,
     LIT_FLOAT,
     LIT_CHAR,
@@ -50,7 +50,7 @@ typedef enum {
 
 } Nature;
 
-typedef enum {
+typedef enum Type {
     INT_TYPE,
     FLOAT_TYPE,
     CHAR_TYPE,

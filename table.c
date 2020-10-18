@@ -166,13 +166,16 @@ void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param **par
 
 Symbol* getSymbol(char *key) {
 
-    int index = hashFunction(key);
+    char aux[50];
+    strncpy(aux, key, 50);
+
+    int index = hashFunction(aux);
     SymbolTable *table = currentScope;
     Symbol *symbol = NULL;
 
     while (table != NULL) {
         while (table->elements[index] != NULL) {
-            if (strncmp(table->elements[index]->key, key, strlen(key)) == 0) {
+            if (strncmp(table->elements[index]->key, aux, strlen(aux)) == 0) {
                 symbol = table->elements[index];
                 break;
             }
