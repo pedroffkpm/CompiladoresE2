@@ -62,3 +62,7 @@ void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param** par
 Symbol* getSymbol(char* key);
 
 int inferSizeForType(Type type, int elem_number);
+
+int inferType(Type left, Type right);
+
+int convertType(Type from, Type to);

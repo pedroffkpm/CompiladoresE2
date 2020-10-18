@@ -1,10 +1,9 @@
 
 %{
-#include "lexVal.h" 
 #include "parser.tab.h"
 #include <string.h>
 #include <stdlib.h>
-//puxa a bib <stdbool.h> -> permite usar o tipo bool e false/true
+#include "lexVal.h" //puxa a bib <stdbool.h> -> permite usar o tipo bool e false/true
 #include "ast.h"
 
 int createdTokens = 0;
@@ -109,7 +108,7 @@ floatlit {intlit}"."{digit}+((E|e){intlit})?
 	yylval.valor_lexico->lineNumber = get_line_number();
 	yylval.valor_lexico->tokenType = LITERAL;
 	yylval.valor_lexico->literalType = FLOAT;
-	yylval.valor_lexico->value.i = atoi(yytext);
+	yylval.valor_lexico->value.f = atof(yytext);
 	yylval.valor_lexico->tokenInAst = FALSE;
 	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
 	return TK_LIT_INT; }

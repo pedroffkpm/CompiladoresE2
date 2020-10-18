@@ -144,7 +144,7 @@ void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param **par
     free(key);
 
     currentScope->elements[index]->line = valor_lexico->lineNumber;
-    // currentScope->elements[index]->nature = valor_lexico->nature;
+    currentScope->elements[index]->nature = valor_lexico->nature;
     currentScope->elements[index]->n_params = paramSize;
     currentScope->elements[index]->params = (Param**) malloc(sizeof(Param*) * paramSize);
     memcpy(currentScope->elements[index]->params, params, sizeof(Param*) * paramSize);
@@ -181,3 +181,31 @@ Symbol* getSymbol(char *key) {
         }
     }
 }
+
+int inferType(Type left, Type right) {
+    if(left == STRING_TYPE || left == CHAR_TYPE || right == STRING_TYPE || right == CHAR_TYPE) {
+        return -1;
+    }
+    if(left == FLOAT_TYPE || right == FLOAT_TYPE) {
+        return FLOAT_TYPE;
+    }
+    if(left == INT_TYPE || right == INT_TYPE) {
+        return INT_TYPE;
+    }
+    if(left == BOOL_TYPE || right == BOOL_TYPE) {
+        return BOOL_TYPE;
+    }
+
+    return -1;
+}
+
+//posso converter int para bool? -> convertType(int, bool)? -> return bool
+int convertType(Type from, Type to) { 
+    if(inferType(from, to) != -1) {
+        return to;
+    }
+    else {
+        return -1;
+    }
+}
+
