@@ -5,6 +5,8 @@
 #include "lexVal.h"
 #include "ast.h"
 
+#define HASH_SIZE 9973
+
 typedef enum {
     LIT_INT,
     LIT_FLOAT,
@@ -39,18 +41,20 @@ typedef struct Symbol {
     Nature nature;
     Type type;
     int size;
+    int n_params;
     Param** params;
     struct lexval* valor_lexico;
 } Symbol;
 
 typedef struct SymbolTable {
-    Symbol** head;
+    Symbol** elements;
     struct SymbolTable* nextTable;
 
 } SymbolTable;
 
 
 SymbolTable* createTable();
+
 void pushTable();
 void popTable();
 
