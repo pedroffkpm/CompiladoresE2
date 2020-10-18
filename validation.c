@@ -76,6 +76,7 @@ char* errorMessage(int errorcode) {
         return "Wrong value for shift";
         break;
     default:
+        return "";
         break;
     }
 }

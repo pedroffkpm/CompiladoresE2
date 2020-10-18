@@ -4,7 +4,7 @@
 
 #include "lexVal.h"
 
-typedef struct node{
+typedef struct node {
 	struct lexval* token;
 	int kidsNumber;
 	struct node **kids; // lista de ponteiros

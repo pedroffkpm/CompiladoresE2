@@ -7,7 +7,7 @@ int hashFunction(char *key) {
    unsigned long hash = 5381;
     int c;
 
-    while (c = *key++)
+    while ((c = *key++))
         hash = ((hash << 5) + hash) + c;
     return (int)(hash%HASH_SIZE);
 }
@@ -192,6 +192,8 @@ Symbol* getSymbol(char *key) {
             return symbol;
         }
     }
+
+    return symbol;
 }
 
 int inferType(Type left, Type right) {
