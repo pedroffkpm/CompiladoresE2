@@ -4,9 +4,12 @@
 SymbolTable* currentScope = NULL;
 
 int hashFunction(char *key) {
-    //to do
+   unsigned long hash = 5381;
+    int c;
 
-    return 5;
+    while (c = *key++)
+        hash = ((hash << 5) + hash) + c;
+    return (int)(hash%HASH_SIZE);
 }
 
 int inferSizeForType(Type type, int elem_number) {
