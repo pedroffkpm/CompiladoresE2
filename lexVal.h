@@ -30,13 +30,14 @@
 #define TRUE 1
 
 //tipo e natureza de um token
-typedef enum Nature {
+typedef enum {
     LIT_INT,
     LIT_FLOAT,
     LIT_CHAR,
     LIT_STRING,
     LIT_BOOL,
     VAR,
+    VAR_DEC,
     VECTOR,
     FUNCTION,
 	RETURN,
@@ -46,11 +47,12 @@ typedef enum Nature {
 	INPUT,
 	OUTPUT,
 	VEC_ID,
-	VEC_IND
+	VEC_IND,
+	FUNC_ARG
 
 } Nature;
 
-typedef enum Type {
+typedef enum {
     INT_TYPE,
     FLOAT_TYPE,
     CHAR_TYPE,
