@@ -190,7 +190,7 @@ ids: id_global ',' ids {$$ = $1;
    | id_global { $$ = $1; } ;
 
 id_global: TK_IDENTIFICADOR { $$ = createNode($1, NONE);
-								addNature($$, VAR); }
+								addNature($$, VAR_DEC); }
          | TK_IDENTIFICADOR '[' TK_LIT_INT ']' { $$ = createNode($2, VEC_INDEX);
 								addNature($$, VECTOR);
 								Node *node1 = createNode($1, NONE);
@@ -216,7 +216,7 @@ global_args_list: global_func_arg ',' global_args_list { $$ = $1;
 
 global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createNode($3, NONE);
 								addType($$, $2);
-								addNature($$, VAR); } ; //reservada
+								addNature($$, FUNC_ARG); } ; //reservada
 
 bloco: '{' comando_list '}' { $$ = $2; }; 
 	//|comando { $$ = $1; };
@@ -238,11 +238,11 @@ var_local: static_opcional const_opcional tipo variavel { $$ = $4;
 								addType($$, $3); } ; //reservada
 
 variavel: TK_IDENTIFICADOR init_opcional ',' variavel { $$ = createNode($1, NONE); //observar(talvez inverter)
-								addNature($$, VAR);
+								addNature($$, VAR_DEC);
 								addChild($$, $2);
 								addChild($$, $4); }
         | TK_IDENTIFICADOR init_opcional { $$ = createNode($1, NONE);
-								addNature($$, VAR);
+								addNature($$, VAR_DEC);
 								addChild($$, $2); } ;
 
 init_opcional: TK_OC_LE lit_ou_id { $$ = createNode($1, NONE);
