@@ -1,53 +1,106 @@
 #include "validation.h"
 
-void printError(int errorcode, Node* node, Symbol* symbol) {
-    printf("Line %d:\nERROR\t %s: %s\n", lineNumber, errorMessage(errorcode), str);
+char* typeToString(Type t) {
+    switch (t)
+    {
+    case INT_TYPE:
+        return "int";
+        break;
+    case FLOAT_TYPE:
+        return "float";
+        break;
+    case CHAR_TYPE:
+        return "char";
+        break;
+    case STRING_TYPE:
+        return "string";
+        break;
+    case BOOL_TYPE:
+        return "bool";
+        break;
+    default:
+        return "";
+        break;
+    }
 }
 
 char* errorMessage(int errorcode) {
     switch (errorcode)
     {
-    case ERR_UNDECLARED:
+    case ERR_UNDECLARED: //SIMPLE ERROR
         return "Undeclared Identifier";
         break;
-    case ERR_DECLARED:
+    case ERR_DECLARED: //SIMPLE ERROR
         return "Identifier was already declared";
         break;
-    case ERR_VARIABLE:
+    case ERR_VARIABLE: //SIMPLE ERROR
         return "Variable, but expected vector or function";
         break;
-    case ERR_VECTOR:
+    case ERR_VECTOR: //SIMPLE ERROR
         return "Vector, but expected variable or function";
         break;
-    case ERR_FUNCTION:
+    case ERR_FUNCTION: //SIMPLE ERROR
         return "Function, but expected vector or variable";
         break;
-    case ERR_WRONG_TYPE:
-        return "";
-            break;
-    case ERR_STRING_TO_X:
-            break;
-    case ERR_CHAR_TO_X:
-            break;
-    case ERR_STRING_SIZE:
-            break;
-    case ERR_MISSING_ARGS:
-            break;
-    case ERR_EXCESS_ARGS:
-            break;
-    case ERR_WRONG_TYPE_ARGS:
-            break;
-    case ERR_WRONG_PAR_INPUT:
-            break;
-    case ERR_WRONG_PAR_OUTPUT:
-            break;
-    case ERR_WRONG_PAR_RETURN:
-            break;
-    case ERR_WRONG_PAR_SHIFT:
-            break;
+    case ERR_WRONG_TYPE: //TYPE ERROR
+        return "Wrong Type"; //deve vir uma msg "expected X but got Y" depois
+        break;
+    case ERR_WRONG_TYPE_ARGS: //TYPE ERROR
+        return "Argument is of wrong type";
+        break;
+    case ERR_WRONG_PAR_INPUT: //TYPE ERROR
+        return "Type not supported for input";
+        break;
+    case ERR_WRONG_PAR_OUTPUT: //TYPE ERROR
+        return "Type not supported for output";
+        break;
+    case ERR_WRONG_PAR_RETURN: //TYPE ERROR
+        return "Wrong type for return"; //opctionalmente: "expected x, but got y"
+        break;
+    case ERR_STRING_TO_X: //CONVERSION ERROR
+        return "Cannot convert String to type"; //deve vir segundo tipo depois
+        break;
+    case ERR_CHAR_TO_X: //CONVERSION ERROR
+        return "Cannot convert Char to type"; //deve vir segundo tipo depois
+        break;
+    case ERR_STRING_SIZE: //SIZE ERROR
+        return "Incompatible size for String";
+        break;
+    case ERR_MISSING_ARGS: //SIZE ERROR
+        return "Missing Args for function"; //opctionalmente: "expected x, but got y"
+        break;
+    case ERR_EXCESS_ARGS: //SIZE ERROR
+        return "Too many Args for function"; //opctionalmente: "expected x, but got y"
+        break;
+    case ERR_WRONG_PAR_SHIFT: //SHIFT ERROR
+        return "Wrong value for shift";
+        break;
     default:
         break;
     }
+}
+
+void printSimpleError(int errorcode, Node* node, Symbol* symbol) {
+    int lineNumber = symbol == NULL ? (node == NULL ? -1 : node->token->lineNumber) : symbol->line;
+    char* str = node == NULL ? (symbol == NULL ? "" : symbol->key ) : node->token->value.str;
+
+    printf("Line %d:on %s\n\tERROR\t %s\n", lineNumber, str, errorMessage(errorcode));
+}
+
+void printTypeError(int errorcode, int lineNumber, Type expected, Type real, char* name) {
+    printf("Line: %d: on %s\n\tERROR\t %s: expected %s but got %s\n", lineNumber, name, errorMessage(errorcode), typeToString(expected), typeToString(real));
+}
+
+void printConversionError(int errorcode, int lineNumber, Type wrong, char* name) {
+    printf("Line: %d: on %s\n\tERROR\t %s %s\n", lineNumber, name, errorMessage(errorcode), typeToString(wrong));
+}
+
+void printSizeError(int errorcode, int lineNumber, int expected, int real, char* name) {
+    printf("Line: %d: on %s\n\tERROR\t %s: expected %d but got %d\n", lineNumber, name, errorMessage(errorcode), expected, real);
+}
+
+void printShiftError(int errorcode, int lineNumber, int passedNumber, char* name) {
+    printf("Line: %d: on %s\n\tERROR\t %s: expected max 16, but got %d\n", lineNumber, name, errorMessage(errorcode), passedNumber);
 }
 
 void validateProgram(void* arvore) {
@@ -66,9 +119,16 @@ void validateProgram(void* arvore) {
 void validateVar(Node* node) {
     Symbol* s = getSymbol(node->token->value.str);
     if (s == NULL) {
-        printError(ERR_UNDECLARED, node, s);
+        printSimpleError(ERR_UNDECLARED, node, s);
         exit(ERR_UNDECLARED);
     }
+
+    if(s->nature == FUNCTION) {
+        printSimpleError(ERR_FUNCTION, node, s);
+        exit(ERR_FUNCTION);
+    }
+
+    if(s->nature ) {}
 
 
 }
