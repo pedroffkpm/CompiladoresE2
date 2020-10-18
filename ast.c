@@ -53,13 +53,14 @@ void freeDanglingParser(Node* node) {
 	if(node != NULL) {
 		nullifyPointer(node->token, danglingNodes);
 		while(i < node->kidsNumber) {
-			freeDanglingScanner(node->kids[i]);
+			freeDanglingParser(node->kids[i]);
 			++i;
 		}
 		free(node->kids);
 		if(node->token != NULL) {
-			if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING))
-				free(node->token->value.str);
+			if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING)) {
+				free(node->token->value.str);			
+			}
 			free(node->token);
 		}
 		free(node);
@@ -153,11 +154,12 @@ void freeDanglingScanner(Node* node) {
 		}
 		free(node->kids);
 		if(node->token != NULL) {
-			if(!node->token->tokenInAst) {
-				if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING))
+			if(node->token->tokenInAst == FALSE) {
+				if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING)) {
 					free(node->token->value.str);
+				}
+				free(node->token);
 			}
-			free(node->token);
 		}
 		free(node);
 	}
