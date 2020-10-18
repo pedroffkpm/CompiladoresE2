@@ -53,6 +53,7 @@ typedef struct SymbolTable {
 
 
 SymbolTable* createTable();
+void deleteTables();
 
 void pushTable();
 void popTable();

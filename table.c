@@ -46,6 +46,15 @@ SymbolTable *createTable() {
     return new;
 }
 
+void deleteTables() {
+    if (currentScope == NULL) {
+        return;
+    }
+
+    popTable();
+    deleteTables();
+}
+
 void pushTable() {
 
     SymbolTable *new = createTable();

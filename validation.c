@@ -7,8 +7,12 @@ void validateProgram(void* arvore) {
 
     validateTable(scope, node); //já printa erro? ou retorna string?
 
-    popTable(); //como ter certeza que foram todas? aqui precisa de garantia que todas foram popped e só sobrou o primeiro escopo
+    deleteTables();
 
     free(scope);
+
+}
+
+void validateTable(SymbolTable* table, Node* node) {
 
 }
