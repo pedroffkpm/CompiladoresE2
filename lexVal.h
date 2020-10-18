@@ -38,7 +38,11 @@ typedef enum {
     LIT_BOOL,
     VAR,
     VECTOR,
-    FUNCTION
+    FUNCTION,
+	RETURN,
+	UN_OP,
+	BIN_OP,
+	TER_OP
 
 } Nature;
 

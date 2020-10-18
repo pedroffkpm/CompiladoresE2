@@ -320,9 +320,12 @@ shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
 								addType(node2, INT_TYPE);
 								addChild($$, node2); }
 
-retorno: TK_PR_RETURN expressao { $$ = createNode($1, NONE); 
+retorno: TK_PR_RETURN expressao { $$ = createNode($1, NONE);
+								addNature($$, RETURN);
+								addType($$, $2->token->varType); 
 								addChild($$, $2);}
-	|TK_PR_RETURN { $$ = createNode($1, NONE); }
+	|TK_PR_RETURN { $$ = createNode($1, NONE);
+								addNature($$, RETURN); }
        	| TK_PR_BREAK { $$ = createNode($1, NONE); }
        	| TK_PR_CONTINUE { $$ = createNode($1, NONE); } ;
 
@@ -351,10 +354,12 @@ literal: TK_LIT_INT { $$ = createNode($1, NONE);
 
 expressao: 
 	parenteses_ou_operando operador_binario expressao { $$ = $2;
+								addNature($$, BIN_OP);
 								addType($$, $1->token->varType);
 								addChild($$, $1);
 								addChild($$, $3); }
 	|parenteses_ou_operando operador_ternario expressao { $$ = $2;
+								addNature($$, TER_OP);
 								addType($$, $3->token->varType);
 								addChild($$, $1);
 								addChild($$, $3); }
@@ -364,6 +369,7 @@ parenteses_ou_operando:
 	'(' expressao ')' { $$ = $2;}
 	| operandos { $$ = $1;}
 	| operador_unario parenteses_ou_operando { $$ = $1, addChild($$, $2);
+								addNature($$, UN_OP);
 								addType($$, $2->token->varType); }
    	| func_call { $$ = $1; } ;
 
