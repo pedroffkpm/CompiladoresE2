@@ -42,7 +42,9 @@ typedef enum {
 	RETURN,
 	UN_OP,
 	BIN_OP,
-	TER_OP
+	TER_OP,
+	INPUT,
+	OUTPUT
 
 } Nature;
 

@@ -284,10 +284,12 @@ while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = createNode($1, NON
 								addChild($$, $6);};
 
 comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
+								addNature($$, INPUT);
 								Node *node = createNode($2, NONE);
 								addNature(node, VAR);
 								addChild($$, node); }
           | TK_PR_OUTPUT lit_ou_id { $$ = createNode($1, NONE);
+								addNature($$, OUTPUT);
 								addChild($$, $2);};
 
 func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = createNode($1, F_CALL);
