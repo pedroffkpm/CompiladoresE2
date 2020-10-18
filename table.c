@@ -103,6 +103,7 @@ Symbol* getSymbol(char *key) {
         while (table->elements[index] != NULL) {
             if (strncmp(table->elements[index]->key, key, strlen(key)) == 0) {
                 symbol = table->elements[index];
+                break;
             }
             else {
                 ++index;
