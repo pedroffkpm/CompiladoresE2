@@ -1,4 +1,5 @@
 #include "table.h"
+#include <string.h>
 
 SymbolTable* currentScope = NULL;
 
@@ -90,7 +91,7 @@ void popTable() {
 }
 
 char* boolString(bool b) {
-    return b ? "true" : "false"
+    return b ? "true" : "false";
 }
 
 char* makeKey(int keysize, Nature nature, struct lexval *valor_lexico) {
@@ -142,10 +143,12 @@ void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param **par
     currentScope->elements[index]->line = valor_lexico->lineNumber;
     // currentScope->elements[index]->nature = valor_lexico->nature;
     currentScope->elements[index]->n_params = paramSize;
-    currentScope->elements[index]->params = params;
+    currentScope->elements[index]->params = (Param**) malloc(sizeof(Param*) * paramSize);
+    memcpy(currentScope->elements[index]->params, params, sizeof(Param*) * paramSize);
     currentScope->elements[index]->type = type;
     currentScope->elements[index]->size = inferSizeForType(type, vecSize);
-    currentScope->elements[index]->valor_lexico = valor_lexico;
+    currentScope->elements[index]->valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
+    memcpy(currentScope->elements[index]->valor_lexico, valor_lexico, sizeof(struct lexval));
 
 }
 
