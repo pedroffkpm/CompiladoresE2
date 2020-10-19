@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "lexVal.h"
 #include "ast.h"
 
 #define HASH_SIZE 9973
@@ -26,11 +25,14 @@
 //     BOOL_TYPE
 // } Type;
 
+typedef struct Param Param;
+
 typedef struct Param
 {
     Type type;
     char* name;
     bool _const;
+	Param *next;
 } Param;
 
 
@@ -41,7 +43,7 @@ typedef struct Symbol {
     Type type;
     int size;
     int n_params;
-    Param** params;
+    Param* params;
     struct lexval* valor_lexico;
 } Symbol;
 
@@ -51,16 +53,18 @@ typedef struct SymbolTable {
 
 } SymbolTable;
 
-
+Param* createParam(Node *node);
 SymbolTable* createTable();
 void deleteTables();
 
 void pushTable();
 void popTable();
 
-void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param** params, struct lexval* valor_lexico);
+void addSymbol(Nature nature, Type type, int vecSize, Param* params, struct lexval* valor_lexico);
 
 Symbol* getSymbol(char* key);
+
+Symbol* getSymbolOnTable(char *key);
 
 int inferSizeForType(Type type, int elem_number);
 

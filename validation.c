@@ -1,5 +1,6 @@
 #include "validation.h"
 
+
 char* typeToString(Type t) {
     switch (t)
     {
@@ -76,7 +77,7 @@ char* errorMessage(int errorcode) {
         return "Wrong value for shift";
         break;
     default:
-        return "";
+		return "";
         break;
     }
 }
@@ -126,60 +127,240 @@ void validateVar(Node* node) {
         exit(ERR_FUNCTION);
     }
 
-    if(s->nature ) {}
-
-
+    if(s->nature == VECTOR) {
+		printSimpleError(ERR_VECTOR, node->token->lineNumber, node->token->value.str);
+        exit(ERR_VECTOR);		
+	}
+	return;
 }
+
+void validateVector(Node* node) {
+    Symbol* s = getSymbol(node->token->value.str);
+    if (s == NULL) {
+        printSimpleError(ERR_UNDECLARED, node->token->lineNumber, node->token->value.str);
+        exit(ERR_UNDECLARED);
+    }
+
+    if(s->nature == FUNCTION) {
+        printSimpleError(ERR_FUNCTION, node->token->lineNumber, node->token->value.str);
+        exit(ERR_FUNCTION);
+    }
+
+    if(s->nature == VAR) {
+		printSimpleError(ERR_VARIABLE, node->token->lineNumber, node->token->value.str);
+        exit(ERR_VARIABLE);		
+	}
+	return;
+}
+
+void validateFunctionArgs(Node *node, Param *param) {
+	if (param == NULL){
+		if (node == NULL) {
+			return;
+		} else {
+			printSimpleError(ERR_EXCESS_ARGS, node->token->lineNumber, node->token->value.str);
+			exit(ERR_EXCESS_ARGS);
+		}
+	} else if(node == NULL) {
+		printSimpleError(ERR_MISSING_ARGS, 0, param->name);
+		exit(ERR_MISSING_ARGS);
+	}
+	if(param->type == node->token->varType) {
+		validateFunctionArgs(node->kids[0], param->next);
+	} else {
+		printTypeError(ERR_WRONG_TYPE_ARGS, node->token->lineNumber, param->type, node->token->varType, node->token->value.str);
+		exit(ERR_WRONG_TYPE_ARGS);
+	}
+	return;
+	
+}
+
+
+void validateFunction(Node* node) {
+    Symbol* s = getSymbol(node->token->value.str);
+    if (s == NULL) {
+        printSimpleError(ERR_UNDECLARED, node->token->lineNumber, node->token->value.str);
+        exit(ERR_UNDECLARED);
+    }
+
+    if(s->nature == VAR) {
+        printSimpleError(ERR_VARIABLE, node->token->lineNumber, node->token->value.str);
+        exit(ERR_VARIABLE);
+    }
+
+    if(s->nature == VECTOR) {
+		printSimpleError(ERR_VECTOR, node->token->lineNumber, node->token->value.str);
+        exit(ERR_VECTOR);		
+	}
+	validateFunctionArgs(node->kids[0], s->params);
+	return;
+}
+/*
+void validateUnOp(Node *node){
+	if(node->kids[0]->token->nature == VAR) {
+		Symbol* s = getSymbol(node->token->value.str);
+		validateVar(node->kids[0]);
+	}
+	if(node->kids[0]->token->nature == VECTOR) {
+		Symbol* s = getSymbol(node->token->value.str);
+		validateVector(node->kids[0]);
+	}
+	return;
+}
+*/
+
+void validateBinOp(Node *node) {
+	if(node->token->varType == -1) {
+		printSimpleError(ERR_STRING_TO_X, node->kids[0]->token->lineNumber, NULL); //o q printar
+		exit(ERR_STRING_TO_X);
+	}/*
+	Symbol* s = getSymbolOnTable(node->token->value.str);
+	if(node->token->varType == STRING_TYPE) {
+		
+	}*/
+	return;
+}
+
+void isDeclared(Node* node) {
+	Symbol* s = getSymbolOnTable(node->token->value.str);
+    if (s == NULL) {
+        return;
+    }
+	printSimpleError(ERR_DECLARED, node->token->lineNumber, node->token->value.str);
+    exit(ERR_DECLARED);
+}
+
+void validateInput(Node *node) {
+	Symbol* s = getSymbol(node->kids[0]->token->value.str);
+	if(s->type == INT && s->type == FLOAT) {
+		return;
+	}
+	printTypeError(ERR_WRONG_PAR_INPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);	
+	return;
+}
+
+void validateOutput(Node *node) {
+	Symbol* s = getSymbol(node->kids[0]->token->value.str);
+	if(s->type == INT && s->type == FLOAT) {
+		return;
+	}
+	printTypeError(ERR_WRONG_PAR_OUTPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);	
+	return;
+}
+
+void validateReturn(Node *node) {
+	return;
+}
+
+void validateShift(Node *node) {
+	if(node->kids[1]->token->value.i > 16) {
+		printShiftError(ERR_WRONG_PAR_SHIFT, node->token->lineNumber, node->kids[1]->token->value.i, node->kids[2]->token->value.str);
+		exit(ERR_WRONG_PAR_SHIFT);
+	}
+	return;
+}
+
+void validateAttribution(Node *node) {
+	Symbol* s = getSymbol(node->kids[0]->token->value.str);
+	if(s->type == node->kids[1]->token->varType) {
+		if(s->type == STRING_TYPE) {
+			if(s->size != sizeof(node->kids[1]->token->value.str)) {
+				printSizeError(ERR_STRING_SIZE, node->token->lineNumber, sizeof(node->kids[1]->token->value.str), s->size, s->key);
+				exit(ERR_STRING_SIZE);
+			}
+		}
+		return;
+	}
+	if(node->kids[1]->token->varType == CHAR_TYPE){
+		printConversionError(ERR_CHAR_TO_X, node->token->lineNumber, s->type, node->kids[0]->token->value.str);
+		exit(ERR_CHAR_TO_X);
+	}
+	if(node->kids[1]->token->varType == STRING_TYPE){
+		printConversionError(ERR_STRING_TO_X, node->token->lineNumber, s->type, node->kids[0]->token->value.str);
+		exit(ERR_STRING_TO_X);
+	}
+	return;
+}
+
 
 void validateTable(SymbolTable* table, Node* node) {
     if(node == NULL) {
         return;
     }
-
     switch (node->token->nature)
     {
     case LIT_INT:
-        addSymbol(LIT_INT, node->token->varType, 1, 0, NULL, node->token);
+        addSymbol(LIT_INT, node->token->varType, 1, NULL, node->token);
         break;
     case LIT_FLOAT:
-        addSymbol(LIT_FLOAT, node->token->varType, 1, 0, NULL,node->token);
+        addSymbol(LIT_FLOAT, node->token->varType, 1, NULL,node->token);
         break;
     case LIT_CHAR:
-        addSymbol(LIT_CHAR, node->token->varType, 1, 0, NULL,node->token);
+        addSymbol(LIT_CHAR, node->token->varType, 1, NULL,node->token);
         break;
     case LIT_STRING:
-        addSymbol(LIT_STRING, node->token->varType, 1, 0, NULL,node->token);
+        addSymbol(LIT_STRING, node->token->varType, 1, NULL,node->token);
         break;
     case LIT_BOOL:
-        addSymbol(LIT_BOOL, node->token->varType, 1, 0, NULL,node->token);
+        addSymbol(LIT_BOOL, node->token->varType, 1, NULL,node->token);
         break;
-    case VAR:
-        addSymbol(VAR, node->token->varType, 1, 0, NULL,node->token);
+	case VAR:
+		validateVar(node);
+		break;
+    case VAR_DEC:
+		isDeclared(node);
+        addSymbol(VAR, node->token->varType, 1, NULL,node->token);
         break;
-    case VECTOR:
-        addSymbol(LIT_FLOAT, node->token->varType, 1, 0, NULL,node->token);
+	case VECTOR:
+		validateVector(node);
+    case VECTOR_DEC:
+		isDeclared(node);	
+        addSymbol(node->token->nature, node->kids[0]->token->varType, node->kids[1]->token->value.i, NULL, node->kids[0]->token);
         break;
-    case FUNCTION:
+	case FUNCTION:
+		validateFunction(node);
+    case FUNCTION_DEC:
+		isDeclared(node);
+		addSymbol(FUNCTION, node->token->varType, 1, createParam(node->kids[0]), node->token); //push
         break;
 	case RETURN:
+		validateReturn(node); //falta
         break;
 	case UN_OP:
         break;
 	case BIN_OP:
+		validateBinOp(node);
         break;
-	case TER_OP:
+	case TER_OP: //falta
         break;
 	case INPUT:
+		validateInput(node); 
         break;
 	case OUTPUT:
+		validateOutput(node);
         break;
-	case VEC_ID:
+	case VEC_ID: //ignore
         break;
-	case VEC_IND:
+	case VEC_IND: //ignore
         break;
-    
+	case FUNC_ARG: //ignore
+		break;
+	case INIT_BLOCK:
+		pushTable();
+		break;
+	case END_BLOCK:
+		popTable();
+		break;
+	case SHIFT:
+		validateShift(node);
+		break;
+	case ATTRIB:
+		validateAttribution(node);
+		break;
+	case INIT:
+		break;
     default:
         break;
     }
-
+	return;
 }

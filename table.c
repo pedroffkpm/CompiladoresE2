@@ -29,8 +29,29 @@ int inferSizeForType(Type type, int elem_number) {
     default:
         break;
     }
+	return 0;
 }
 
+Param* createParam(Node *node) {
+	Param *new = malloc(sizeof(Param));
+	if (node == NULL) {
+		new = NULL;
+		return new;
+	}
+	new->type = node->token->varType;
+	new->name = node->token->value.str;
+	new->_const = FALSE;
+	if(node->kidsNumber > 0) {
+		if(node->kids[0] != NULL) {
+			new->next = createParam(node->kids[0]);
+		} else {
+			new->next = NULL;
+		}
+	} else {
+		new->next = NULL;
+	}
+	return new;
+}
 SymbolTable *createTable() {
     SymbolTable *new = (SymbolTable *)malloc(sizeof(SymbolTable));
 
@@ -70,7 +91,7 @@ void freeParam(Param *parametro) {
     if (parametro == NULL) {
         return;
     }
-
+	freeParam(parametro->next);
     if (parametro->name != NULL) {
         free(parametro->name);
     }
@@ -83,7 +104,7 @@ void popTable() {
         for (int i = 0; i < HASH_SIZE; i++) {
             Symbol *elm = currentScope->elements[i];
             for (int j = 0; j < elm->n_params; j++) {
-                freeParam(elm->params[j]);
+                freeParam(elm->params);
             }
 
             free(elm->key);
@@ -135,7 +156,7 @@ char* makeKey(int keysize, Nature nature, struct lexval *valor_lexico) {
     return key;
 }
 
-void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param **params, struct lexval *valor_lexico) {
+void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexval *valor_lexico) {
 
     int keysize = 50;
     char* key = makeKey(keysize, nature, valor_lexico);
@@ -154,9 +175,7 @@ void addSymbol(Nature nature, Type type, int vecSize, int paramSize, Param **par
 
     currentScope->elements[index]->line = valor_lexico->lineNumber;
     currentScope->elements[index]->nature = valor_lexico->nature;
-    currentScope->elements[index]->n_params = paramSize;
-    currentScope->elements[index]->params = (Param**) malloc(sizeof(Param*) * paramSize);
-    memcpy(currentScope->elements[index]->params, params, sizeof(Param*) * paramSize);
+    currentScope->elements[index]->params = params;
     currentScope->elements[index]->type = type;
     currentScope->elements[index]->size = inferSizeForType(type, vecSize);
     currentScope->elements[index]->valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
@@ -192,9 +211,32 @@ Symbol* getSymbol(char *key) {
             return symbol;
         }
     }
-
-    return symbol;
+	return symbol;
 }
+
+Symbol* getSymbolOnTable(char *key) {
+
+    char aux[50];
+    strncpy(aux, key, 50);
+
+    int index = hashFunction(aux);
+    SymbolTable *table = currentScope;
+    Symbol *symbol = NULL;
+
+    while (table->elements[index] != NULL) {
+        if (strncmp(table->elements[index]->key, aux, strlen(aux)) == 0) {
+            symbol = table->elements[index];
+            break;
+        }
+        else {
+            ++index;
+            index %= HASH_SIZE;
+        }
+    }
+
+	return symbol;
+}
+
 
 int inferType(Type left, Type right) {
     if(left == STRING_TYPE || left == CHAR_TYPE || right == STRING_TYPE || right == CHAR_TYPE) {
@@ -209,6 +251,27 @@ int inferType(Type left, Type right) {
     if(left == BOOL_TYPE || right == BOOL_TYPE) {
         return BOOL_TYPE;
     }
+	if(left == STRING_TYPE || right == STRING_TYPE) {
+        return STRING_TYPE;
+    }
+	if(left == FLOAT_TYPE || right == INT_TYPE) {
+        return FLOAT_TYPE;
+    }
+	if(left == INT_TYPE || right == FLOAT_TYPE) {
+        return FLOAT_TYPE;
+    }
+	if(left == BOOL_TYPE || right == INT_TYPE) {
+        return INT_TYPE;
+    }
+	if(left == INT_TYPE || right == BOOL_TYPE) {
+        return INT_TYPE;
+    }
+	if(left == BOOL_TYPE || right == FLOAT_TYPE) {
+        return FLOAT_TYPE;
+    }
+	if(left == FLOAT_TYPE || right == BOOL_TYPE) {
+        return FLOAT_TYPE;
+    }
 
     return -1;
 }
@@ -221,5 +284,6 @@ int convertType(Type from, Type to) {
     else {
         return -1;
     }
+	return -1;
 }
 

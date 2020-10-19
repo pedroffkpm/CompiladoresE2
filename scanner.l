@@ -1,11 +1,11 @@
 
 %{
 
-#include "lexVal.h" //puxa a bib <stdbool.h> -> permite usar o tipo bool e false/true
+#include "ast.h" //puxa a bib <stdbool.h> -> permite usar o tipo bool e false/true
 #include "parser.tab.h"
 #include <string.h>
 #include <stdlib.h>
-#include "ast.h"
+
 
 int createdTokens = 0;
 bool dangInit = false;

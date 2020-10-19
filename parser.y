@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "lexVal.h"
 #include "lex.yy.h"	
-#include "ast.h"
+#include "table.h"
     
 #define YYERROR_VERBOSE 1
 
@@ -78,8 +78,8 @@ extern Node *danglingNodes;
 %token <valor_lexico> TK_LIT_CHAR
 %token <valor_lexico> TK_LIT_STRING
 %token <valor_lexico> TK_IDENTIFICADOR
-%token <valor_lexico>  '[' '+' '-' '|' '?' '*' '/' '<' '>' '=' '!' '&' '%' '#' '^' '.' '$'
-%token ',' ';' ':' '(' ')' ']' '{' '}'
+%token <valor_lexico>  '{' '}' '[' '+' '-' '|' '?' '*' '/' '<' '>' '=' '!' '&' '%' '#' '^' '.' '$'
+%token ',' ';' ':' '(' ')' ']'
 %token TOKEN_ERRO
 
 //Não-Terminais
@@ -218,7 +218,14 @@ global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createNode($3, NONE
 								addType($$, $2);
 								addNature($$, FUNC_ARG); } ; //reservada
 
-bloco: '{' comando_list '}' { $$ = $2; }; 
+bloco: '{' comando_list '}' { $$ = $2; 
+								Node* node1 =  createNode($1, NONE);
+								addNature(node1, INIT_BLOCK);
+								addChild($$, node1);
+								Node* node2 =  createNode($3, NONE);
+								addNature(node1, END_BLOCK);
+								addChild($$, node2);};
+				 
 	//|comando { $$ = $1; };
 
 comando_list: comando ';' comando_list { $$ = $1; 
@@ -246,6 +253,8 @@ variavel: TK_IDENTIFICADOR init_opcional ',' variavel { $$ = createNode($1, NONE
 								addChild($$, $2); } ;
 
 init_opcional: TK_OC_LE lit_ou_id { $$ = createNode($1, NONE);
+								addNature($$, INIT);
+								addType($$, $2->token->varType);
 								addChild($$, $2); }
              | %empty { $$ = createNode(NULL, NONE); } ;
 
@@ -261,6 +270,7 @@ id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								addChild($$, $3); } ;
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
+								addNature($$, ATTRIB);
 								addChild($$, $1);
 								addChild($$, $3); } ;
 
@@ -307,6 +317,7 @@ id_or_exp_list: expressao ',' id_or_exp_list { $$ = $1;
 	          | expressao { $$ = $1;} ;
 
 shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
+								addNature($$, SHIFT);
 								Node *node1 = createNode($1, NONE);
 								addNature(node1, VAR);
 								addType(node1, INT_TYPE);
@@ -360,12 +371,12 @@ literal: TK_LIT_INT { $$ = createNode($1, NONE);
 expressao: 
 	parenteses_ou_operando operador_binario expressao { $$ = $2;
 								addNature($$, BIN_OP);
-								addType($$, $1->token->varType);
+								addType($$, inferType($1->token->varType, $3->token->varType));
 								addChild($$, $1);
 								addChild($$, $3); }
 	|parenteses_ou_operando operador_ternario expressao { $$ = $2;
 								addNature($$, TER_OP);
-								addType($$, $3->token->varType);
+								addType($$, inferType($2->kids[0]->token->varType, $3->token->varType));
 								addChild($$, $1);
 								addChild($$, $3); }
 	| parenteses_ou_operando { $$ = $1; };

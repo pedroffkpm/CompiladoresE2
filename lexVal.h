@@ -39,7 +39,9 @@ typedef enum {
     VAR,
     VAR_DEC,
     VECTOR,
+    VECTOR_DEC,
     FUNCTION,
+    FUNCTION_DEC,
 	RETURN,
 	UN_OP,
 	BIN_OP,
@@ -48,7 +50,12 @@ typedef enum {
 	OUTPUT,
 	VEC_ID,
 	VEC_IND,
-	FUNC_ARG
+	FUNC_ARG,
+	INIT_BLOCK,
+	END_BLOCK,
+	SHIFT,
+	ATTRIB,
+	INIT
 
 } Nature;
 
