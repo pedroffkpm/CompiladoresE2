@@ -38,7 +38,7 @@ Param* createParam(Node *node) {
 		new = NULL;
 		return new;
 	}
-	new->type = node->token->varType;
+	new->type = node->varType;
 	new->name = node->token->value.str;
 	new->_const = FALSE;
 	if(node->kidsNumber > 0) {
@@ -174,7 +174,7 @@ void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexv
     free(key);
 
     currentScope->elements[index]->line = valor_lexico->lineNumber;
-    currentScope->elements[index]->nature = valor_lexico->nature;
+    currentScope->elements[index]->nature = nature;
     currentScope->elements[index]->params = params;
     currentScope->elements[index]->type = type;
     currentScope->elements[index]->size = inferSizeForType(type, vecSize);

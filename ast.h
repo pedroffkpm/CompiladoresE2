@@ -6,6 +6,7 @@
 
 typedef struct node{
 	struct lexval* token;
+	Type varType;
 	int kidsNumber;
 	struct node **kids; // lista de ponteiros
 } Node;
