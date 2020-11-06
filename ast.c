@@ -188,7 +188,7 @@ void printTokenLabel(Node* node) {
 						printf("[label=\"false\"];\n");
 					break;
 				case STRING:
-					printf("%s ", node->token->value.str);
+					printf("[label=%s];\n", node->token->value.str);
 					break;
 			break;
 			}
