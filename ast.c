@@ -18,6 +18,42 @@ void addChild(Node *father, Node *child);
 void freeDanglingParser(Node* node);
 */
 
+void checkTree(void* voidNode) {
+	Node* node = (Node*)voidNode;
+	int fullPass = 0;
+	while(fullPass == 0) {
+		fullPass = removeNullNode(node);
+	}
+	
+}
+
+int removeNullNode(Node* node) {
+	int i,j;
+	int nullNode = 0;
+	Node* nodeAux;	
+	for(i = 1; i <= node->kidsNumber; ++i) {
+		if(node->kids[i-1]->token == NULL) {
+			nullNode = 1;
+			if(node->kids[i-1]->kidsNumber == 0) {		
+				free(node->kids[i-1]->token);
+				free(node->kids[i-1]);
+				for(j = i; j <= node->kidsNumber; ++j) {
+					node->kids[j-1] = node->kids[j];
+				}
+				node->kidsNumber = node->kidsNumber - 1;
+				node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
+			} else {
+				if(node->kids[i]->kidsNumber == 1) {
+					nodeAux = node->kids[i-1]->kids[0];		
+					free(node->kids[i-1]->token);
+					free(node->kids[i-1]);
+					node->kids[i-1] = nodeAux;
+				}
+			} 
+		}		
+	}
+	return nullNode;
+}
 Node* createNode(struct lexval *token, int tokenType) {
 	++createdNodes;
 	if(token != NULL) {

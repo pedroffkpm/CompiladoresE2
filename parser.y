@@ -158,7 +158,7 @@ extern Node *danglingNodes;
 
 %%
 programa:
-		componentes { $$ = $1; arvore = $$; parsingSucceded = TRUE; };
+		componentes { $$ = $1; arvore = $$; checkTree(arvore); parsingSucceded = TRUE; };
 
 componentes: 
 	declaracao { $$ = $1; }

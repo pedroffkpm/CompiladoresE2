@@ -11,6 +11,10 @@ typedef struct node{
 	struct node **kids; // lista de ponteiros
 } Node;
 
+void checkTree(void* voidNode);
+
+int removeNullNode(Node* node);
+
 void printTree(Node* node);
 
 void printTokenLabel(Node* node);
