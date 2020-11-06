@@ -24,16 +24,16 @@ void checkTree(void* voidNode) {
 	while(fullPass == 0) {
 		fullPass = removeNullNode(node);
 	}
-	
+	return;
 }
 
 int removeNullNode(Node* node) {
 	int i,j;
-	int nullNode = 0;
+	int nullNode = 1;
 	Node* nodeAux;	
 	for(i = 1; i <= node->kidsNumber; ++i) {
 		if(node->kids[i-1]->token == NULL) {
-			nullNode = 1;
+			nullNode = 0;
 			if(node->kids[i-1]->kidsNumber == 0) {		
 				free(node->kids[i-1]->token);
 				free(node->kids[i-1]);
