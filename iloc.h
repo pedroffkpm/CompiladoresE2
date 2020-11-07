@@ -1,0 +1,5 @@
+
+int getRegister();
+
+int getLabel();
+
