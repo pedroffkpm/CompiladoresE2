@@ -2,11 +2,33 @@
 #include <string.h>
 
 SymbolTable* currentScope = NULL;
+int scopeDefined = FALSE;
 
+void defineScope(){
+	currentScope = createTable();
+	scopeDefined = TRUE;
+	return;
+}
+/*
+idList* createId(struct lexval *token1, struct lexval *token2, idList* next) {
+	idList* new = malloc(sizeof(idList));
+	new->id = malloc(sizeof(char) * (strlen(token1->value.str) + 1));
+	strcpy(new->id,token1->value.str);
+	new->size = 0;	
+	if(token2 != NULL)	
+		new->size = token1->value.i;
+	new->next = next;
+	return new;
+}
+
+void addNextId(idList* current, idList* next) {
+	current->next = next;
+	return;
+}	
+*/	
 int hashFunction(char *key) {
    unsigned long hash = 5381;
     int c;
-
     while ((c = *key++))
         hash = ((hash << 5) + hash) + c;
     return (int)(hash%HASH_SIZE);
@@ -32,26 +54,23 @@ int inferSizeForType(Type type, int elem_number) {
 	return 0;
 }
 
-Param* createParam(Node *node) {
+Param* createParam(struct lexval* token, Type type) {
 	Param *new = malloc(sizeof(Param));
-	if (node == NULL) {
+	if (token == NULL) {
 		new = NULL;
 		return new;
 	}
-	new->type = node->varType;
-	new->name = node->token->value.str;
+	new->type = type;
+	new->name = token->value.str;
 	new->_const = FALSE;
-	if(node->kidsNumber > 0) {
-		if(node->kids[0] != NULL) {
-			new->next = createParam(node->kids[0]);
-		} else {
-			new->next = NULL;
-		}
-	} else {
-		new->next = NULL;
-	}
+	new->next = NULL;
 	return new;
 }
+
+void addParam(Param* param1, Param* param2) {
+	param1->next = param2;
+}
+
 SymbolTable *createTable() {
     SymbolTable *new = (SymbolTable *)malloc(sizeof(SymbolTable));
 
@@ -74,6 +93,7 @@ void deleteTables() {
 
     popTable();
     deleteTables();
+	return;
 }
 
 void pushTable() {
@@ -145,10 +165,17 @@ char* makeKey(int keysize, Nature nature, struct lexval *valor_lexico) {
         snprintf(key, keysize, "%c", valor_lexico->value.c);
         break;
     case VAR:
-    case FUNCTION:
+        snprintf(key, keysize, "%s", valor_lexico->value.str);
+		break;
+    case FUNCTION:		
+        snprintf(key, keysize, "%s", valor_lexico->value.str);
+		break;
     case LIT_STRING:
         snprintf(key, keysize, "%s", valor_lexico->value.str);
         break;
+	case VECTOR:
+        snprintf(key, keysize, "%s", valor_lexico->value.str);
+		break;
     default:
         break;
     }
@@ -157,10 +184,10 @@ char* makeKey(int keysize, Nature nature, struct lexval *valor_lexico) {
 }
 
 void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexval *valor_lexico) {
-
+	if(scopeDefined == FALSE)
+		defineScope();
     int keysize = 50;
     char* key = makeKey(keysize, nature, valor_lexico);
-
     int index = hashFunction(key);
 
     while(currentScope->elements[index] != NULL) {
@@ -187,7 +214,9 @@ Symbol* getSymbol(char *key) {
 
     char aux[50];
     strncpy(aux, key, 50);
-
+	if(scopeDefined == FALSE) {
+		defineScope();
+	}
     int index = hashFunction(aux);
     SymbolTable *table = currentScope;
     Symbol *symbol = NULL;
@@ -218,7 +247,9 @@ Symbol* getSymbolOnTable(char *key) {
 
     char aux[50];
     strncpy(aux, key, 50);
-
+	if(scopeDefined == FALSE) {
+		defineScope();
+	}
     int index = hashFunction(aux);
     SymbolTable *table = currentScope;
     Symbol *symbol = NULL;

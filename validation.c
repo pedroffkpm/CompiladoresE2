@@ -1,5 +1,78 @@
 #include "validation.h"
 
+idList* createId(struct lexval *token1, struct lexval *token2, struct idList* next) {
+	idList* new = malloc(sizeof(idList));
+	new->id = malloc(sizeof(char) * (strlen(token1->value.str) + 1));
+	strcpy(new->id,token1->value.str);
+	new->size = 1;	
+	if(token2 != NULL)	
+		new->size = token1->value.i;
+	new->next = next;
+	new->token = token1;
+	return new;
+}
+
+void addNextId(struct idList* current,struct idList* next) {
+	current->next = next;
+	return;
+}	
+
+int addIdsToTable(idList* ids, Type type) {
+	Symbol* s = getSymbolOnTable(ids->id);
+	idList* next = NULL;
+	if(ids->next != NULL){
+		next = ids->next;
+	}
+    	if (s == NULL) {
+		if(ids->size == 1) {
+			addSymbol(VAR, type, ids->size, NULL, ids->token);
+		} else {
+			addSymbol(VECTOR, type, ids->size, NULL, ids->token);
+		}
+		if(ids->next != NULL){
+        		addIdsToTable(ids->next, type);
+		}
+		free(ids->id);
+		free(ids);
+		return 0;
+    	} else {
+		while(next != NULL) {
+			free(ids->id);
+			free(ids);
+			next = next->next; //REVER
+		}
+		//ERRO
+	}
+	return 0;
+}
+
+void addFuncToTable(struct lexval* token, Type type, Param* param) {
+	Symbol* s = getSymbolOnTable(token->value.str);
+    	if (s == NULL) {
+		addSymbol(FUNCTION, type, 1, param, token);
+	} else {
+	//ERRO
+	}
+	return;
+}
+
+void addNodeToTable(Node* node, Type type, Nature nature, int size) {
+	Symbol* s = getSymbolOnTable(node->token->value.str);
+	if (s == NULL) {//FAZER
+		addSymbol(nature, type, size, NULL, node->token);
+		if(node->kidsNumber > 0) {
+			if(node->kids[0]->token->tokenType == IDS) {
+				addNodeToTable(node->kids[0], type, nature, size);
+			}
+			if(node->kids[0]->token->tokenType == COMP_OPER) {
+				addNodeToTable(node->kids[0]->kids[0], type, nature, size);
+			}
+		}
+	} else {
+	//ERRO
+	}
+}
+
 
 char* typeToString(Type t) {
     switch (t)
@@ -102,6 +175,7 @@ void printShiftError(int errorcode, int lineNumber, int passedNumber, char* name
     printf("Line: %d: on %s\n\tERROR\t %s: expected max 16, but got %d\n", lineNumber, name, errorMessage(errorcode), passedNumber);
 }
 
+/*
 void validateProgram(void* arvore) {
     Node* node = (Node*) arvore;
 
@@ -114,7 +188,7 @@ void validateProgram(void* arvore) {
     free(scope);
 
 }
-
+*/
 void validateVar(Node* node) {
     Symbol* s = getSymbol(node->token->value.str);
     if (s == NULL) {
@@ -165,10 +239,10 @@ void validateFunctionArgs(Node *node, Param *param) {
 		printSimpleError(ERR_MISSING_ARGS, 0, param->name);
 		exit(ERR_MISSING_ARGS);
 	}
-	if(param->type == node->token->varType) {
+	if(param->type == node->varType) {
 		validateFunctionArgs(node->kids[0], param->next);
 	} else {
-		printTypeError(ERR_WRONG_TYPE_ARGS, node->token->lineNumber, param->type, node->token->varType, node->token->value.str);
+		printTypeError(ERR_WRONG_TYPE_ARGS, node->token->lineNumber, param->type, node->varType, node->token->value.str);
 		exit(ERR_WRONG_TYPE_ARGS);
 	}
 	return;
@@ -210,7 +284,7 @@ void validateUnOp(Node *node){
 */
 
 void validateBinOp(Node *node) {
-	if(node->token->varType == -1) {
+	if(node->varType == -1) {
 		printSimpleError(ERR_STRING_TO_X, node->kids[0]->token->lineNumber, NULL); //o q printar
 		exit(ERR_STRING_TO_X);
 	}/*
@@ -229,6 +303,15 @@ void isDeclared(Node* node) {
 	printSimpleError(ERR_DECLARED, node->token->lineNumber, node->token->value.str);
     exit(ERR_DECLARED);
 }
+
+void isDeclaredRec(Node* node) {
+	for(int i = 0; i < node->kidsNumber; ++i) {
+		isDeclared(node);
+		isDeclaredRec(node->kids[i]);
+	}
+	return;
+}
+	
 
 void validateInput(Node *node) {
 	Symbol* s = getSymbol(node->kids[0]->token->value.str);
@@ -262,7 +345,7 @@ void validateShift(Node *node) {
 
 void validateAttribution(Node *node) {
 	Symbol* s = getSymbol(node->kids[0]->token->value.str);
-	if(s->type == node->kids[1]->token->varType) {
+	if(s->type == node->kids[1]->varType) {
 		if(s->type == STRING_TYPE) {
 			if(s->size != sizeof(node->kids[1]->token->value.str)) {
 				printSizeError(ERR_STRING_SIZE, node->token->lineNumber, sizeof(node->kids[1]->token->value.str), s->size, s->key);
@@ -271,18 +354,18 @@ void validateAttribution(Node *node) {
 		}
 		return;
 	}
-	if(node->kids[1]->token->varType == CHAR_TYPE){
+	if(node->kids[1]->varType == CHAR_TYPE){
 		printConversionError(ERR_CHAR_TO_X, node->token->lineNumber, s->type, node->kids[0]->token->value.str);
 		exit(ERR_CHAR_TO_X);
 	}
-	if(node->kids[1]->token->varType == STRING_TYPE){
+	if(node->kids[1]->varType == STRING_TYPE){
 		printConversionError(ERR_STRING_TO_X, node->token->lineNumber, s->type, node->kids[0]->token->value.str);
 		exit(ERR_STRING_TO_X);
 	}
 	return;
 }
 
-
+/*
 void validateTable(SymbolTable* table, Node* node) {
     if(node == NULL) {
         return;
@@ -364,3 +447,4 @@ void validateTable(SymbolTable* table, Node* node) {
     }
 	return;
 }
+*/

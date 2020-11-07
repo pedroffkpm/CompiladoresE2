@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "lexVal.h"
 #include "lex.yy.h"	
-#include "table.h"
+#include "validation.h"
     
 #define YYERROR_VERBOSE 1
 
@@ -21,6 +21,7 @@ int parsingSucceded = FALSE;
 
 extern Node *danglingNodes;
 
+//SymbolTable* scopeTable = globalTable;
 
 %}
 
@@ -28,6 +29,7 @@ extern Node *danglingNodes;
 	struct lexval* valor_lexico;
 	struct node* ast;
 	Type type;
+	struct idList* idList;
 }
 
 %define parse.error verbose
@@ -94,8 +96,8 @@ extern Node *danglingNodes;
 //%type<??> tipo
 
 %type <ast> var_global
-%type <ast> ids
-%type <ast> id_global // resolve warnings de forma incorreta
+%type <idList> ids
+%type <idList> id_global // resolve warnings de forma incorreta
 %type <ast> funcao_global
 //header  não deveria ser nodo, como fazer?
 // %type<node> header_func_global
@@ -158,7 +160,7 @@ extern Node *danglingNodes;
 
 %%
 programa:
-		componentes { $$ = $1; arvore = $$; checkTree(arvore); parsingSucceded = TRUE; };
+	componentes { $$ = $1; arvore = removeNullHead($$); checkTree(arvore); parsingSucceded = TRUE; };
 
 componentes: 
 	declaracao { $$ = $1; }
@@ -182,25 +184,30 @@ tipo: TK_PR_INT { $$ = INT_TYPE; }
     | TK_PR_BOOL { $$ = BOOL_TYPE;}
     | TK_PR_STRING { $$ = STRING_TYPE;};
 
-var_global: static_opcional tipo ids ';' { $$ = $3;} ; //reservada
+var_global: static_opcional tipo ids ';' { $$ = createNode(NULL, NONE);
+								addIdsToTable($3, $2);
+								} ; //reservada
 
-ids: id_global ',' ids { $$ = $1;}
+ids: id_global ',' ids { $$ = $1;
+								addNextId($$, $3);}
    | id_global { $$ = $1;} ;
 
-id_global: TK_IDENTIFICADOR {$$ = createNode(NULL, NONE);}
-         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createNode(NULL, NONE);};
+id_global: TK_IDENTIFICADOR {$$ = createId($1, NULL, NULL);}
+         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createId($1, $3, NULL);};
 
 funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = createNode($3, NONE); //reservada
 								addType($$, $2);
-								addChild($$, $7); } ;
+								addChild($$, $7); 
+								addFuncToTable($3, $2, $5);} ;
 
 params_list_global: global_args_list { $$ = $1; }
-                  | %empty { $$ = createNode(NULL, NONE); } ;
+                  | %empty { $$ = createParam(NULL, VAR); } ;
 
-global_args_list: global_func_arg ',' global_args_list { $$ = $1; }
+global_args_list: global_func_arg ',' global_args_list { $$ = $1;
+								addParam($$,$3); }
                 | global_func_arg { $$ = $1; } ;
 
-global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createNode(NULL, NONE); } ; //reservada
+global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createParam($3, $2); } ; //reservada
 
 bloco: '{' comando_list '}' { $$ = $2; }
 				 
@@ -227,10 +234,11 @@ variavel: init_opcional ',' variavel { $$ = $1;
         | init_opcional { $$ = $1;} ;
 
 init_opcional: TK_IDENTIFICADOR TK_OC_LE lit_ou_id { $$ = createNode($2, NONE);
-								addType($$, $3->varType);
-								addChild($$, createNode($1, NONE)); 
+								Node* node = createNode($1, NONE);
+								addType(node, $3->varType);
+								addChild($$, node); 
 								addChild($$, $3);}
-             | TK_IDENTIFICADOR { $$ = createNode(NULL, NONE); } ;
+             | TK_IDENTIFICADOR { $$ = createNode($1, REMOVE); } ;
 
 id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);}
        | TK_IDENTIFICADOR '[' expressao ']' { $$ = createNode($2, VEC_INDEX);

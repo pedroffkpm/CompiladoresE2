@@ -27,10 +27,29 @@ void checkTree(void* voidNode) {
 	return;
 }
 
+Node* removeNullHead(Node* node) {
+	Node* nodeAux;
+	if (node->token == NULL) {
+		nodeAux = node->kids[0];
+		nodeAux->token = node->kids[0]->token;
+		nodeAux->kids = node->kids[0]->kids;
+		free(node->token);
+		free(node);
+	} else {
+		if (node->token->tokenType == REMOVE) {
+			nodeAux = node->kids[0];
+			nodeAux->token = node->kids[0]->token;
+			nodeAux->kids = node->kids[0]->kids;
+			free(node->token);
+			free(node);
+		}
+	}
+	return nodeAux;
+}
 int removeNullNode(Node* node) {
 	int i,j;
 	int nullNode = 1;
-	Node* nodeAux;	
+	Node* nodeAux;
 	for(i = 1; i <= node->kidsNumber; ++i) {
 		if(node->kids[i-1]->token == NULL) {
 			nullNode = 0;
@@ -50,7 +69,26 @@ int removeNullNode(Node* node) {
 					node->kids[i-1] = nodeAux;
 				}
 			} 
-		}		
+		}
+		if(node->kids[i-1]->token->tokenType == REMOVE) {
+			nullNode = 0;
+			if(node->kids[i-1]->kidsNumber == 0) {		
+				free(node->kids[i-1]->token);
+				free(node->kids[i-1]);
+				for(j = i; j <= node->kidsNumber; ++j) {
+					node->kids[j-1] = node->kids[j];
+				}
+				node->kidsNumber = node->kidsNumber - 1;
+				node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
+			} else {
+				if(node->kids[i]->kidsNumber == 1) {
+					nodeAux = node->kids[i-1]->kids[0];		
+					free(node->kids[i-1]->token);
+					free(node->kids[i-1]);
+					node->kids[i-1] = nodeAux;
+				}
+			}
+		}			
 	}
 	return nullNode;
 }

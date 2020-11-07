@@ -35,6 +35,14 @@ typedef struct Param
 	Param *next;
 } Param;
 
+typedef struct idList idList;
+
+typedef struct idList {
+	char* id;
+	int size;
+	struct idList* next;
+	struct lexval* token;
+} idList;
 
 typedef struct Symbol {
     char* key;
@@ -53,15 +61,16 @@ typedef struct SymbolTable {
 
 } SymbolTable;
 
-Param* createParam(Node *node);
+void addParam(Param* param1, Param* param2);
+
+Param* createParam(struct lexval* token, Type type);
 SymbolTable* createTable();
 void deleteTables();
 
 void pushTable();
 void popTable();
 
-void addSymbol(Nature nature, Type type, int vecSize, Param* params, struct lexval* valor_lexico);
-
+void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexval *valor_lexico);
 Symbol* getSymbol(char* key);
 
 Symbol* getSymbolOnTable(char *key);

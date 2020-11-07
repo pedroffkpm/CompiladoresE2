@@ -15,6 +15,8 @@ void checkTree(void* voidNode);
 
 int removeNullNode(Node* node);
 
+Node* removeNullHead(Node* node);
+
 void printTree(Node* node);
 
 void printTokenLabel(Node* node);
