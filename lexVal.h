@@ -23,6 +23,7 @@
 
 /*Valor NONE é usado no campo para tipo do literal quando o token não é literal*/
 #define NONE 0xF
+#define REMOVE 0xE
 
 
 //valores booleanos
@@ -55,7 +56,8 @@ typedef enum {
 	END_BLOCK,
 	SHIFT,
 	ATTRIB,
-	INIT
+	INIT,
+	EMPTY
 
 } Nature;
 
@@ -81,9 +83,7 @@ struct lexval{
 	int tokenInAst;
 	int lineNumber; 
 	int tokenType; 
-	int literalType;
-	Type varType;
-	Nature nature;
+	int literalType;	
 	union Value value; 
 };
 
