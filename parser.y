@@ -217,28 +217,29 @@ comando_list: comando ';' comando_list { $$ = $1;
 								addChild($$, $3);}
         | %empty { $$ = createNode(NULL, NONE); } ;
 
-comando: var_local { $$ = $1; }
-       | atrib { $$ = $1; }
+comando: var_local { $$ = $1; } //DONE
+       | atrib { $$ = $1; validateAttribution($$); } //DONE
        | fluxo { $$ = $1; }
-       | comando_es { $$ = $1; }
-       | func_call { $$ = $1; }
-       | shift { $$ = $1; }
-       | retorno { $$ = $1; }
-       | bloco { $$ = $1; };
+       | comando_es { $$ = $1; } //DONE?
+       | func_call { $$ = $1; validateFunction($$);}
+       | shift { $$ = $1; validateShift($$); }
+       | retorno { $$ = $1; validateReturn($$); }//TODO
+       | bloco { $$ = $1; };//TODO push/pop
 
 var_local: static_opcional const_opcional tipo variavel { $$ = $4;
-								addType($$, $3); } ; //reservada
+								addType($$, $3); 
+								addNodeToTable($4, $3, VAR, 1);} ;
 
 variavel: init_opcional ',' variavel { $$ = $1;
 								addChild($$, $3); }
         | init_opcional { $$ = $1;} ;
 
-init_opcional: TK_IDENTIFICADOR TK_OC_LE lit_ou_id { $$ = createNode($2, NONE);
-								Node* node = createNode($1, NONE);
-								addType(node, $3->varType);
-								addChild($$, node); 
+init_opcional: id_expr TK_OC_LE lit_ou_id { $$ = createNode($2, NONE);
+								addType($1, $3->varType);
+								addChild($$, $1); 
 								addChild($$, $3);}
-             | TK_IDENTIFICADOR { $$ = createNode($1, REMOVE); } ;
+             | id_expr { $$ = $1;
+								changeTokenType($$); } ;
 
 id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);}
        | TK_IDENTIFICADOR '[' expressao ']' { $$ = createNode($2, VEC_INDEX);
@@ -249,7 +250,7 @@ id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);}
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
 								addChild($$, $1);
-								addChild($$, $3); } ;
+								addChild($$, $3);} ;
 
 fluxo: if {$$ = $1;}
      | for {$$ = $1;}
@@ -275,11 +276,13 @@ while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = createNode($1, NON
 
 comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								Node *node = createNode($2, NONE);
-								addChild($$, node); }
+								addChild($$, node);
+								validateInput($$); }
           | TK_PR_OUTPUT lit_ou_id { $$ = createNode($1, NONE);
-								addChild($$, $2);};
+								addChild($$, $2);
+								validateOutput($$);};
 
-func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = createNode($1, F_CALL);
+func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = createNode($1, FUNCTION);
 								addChild($$, $3);};
 
 args_list: id_or_exp_list { $$ = $1;}
@@ -302,7 +305,7 @@ shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
 								addChild($$, node1);
 								Node *node2 = createNode($3, NONE);
 								addType(node2, INT_TYPE);
-								addChild($$, node2); }
+								addChild($$, node2); };
 
 retorno: TK_PR_RETURN expressao { $$ = createNode($1, NONE);
 								addType($$, $2->varType); 

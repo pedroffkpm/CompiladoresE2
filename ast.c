@@ -27,6 +27,15 @@ void checkTree(void* voidNode) {
 	return;
 }
 
+void changeTokenType(Node* node) {
+	node->token->tokenType = REMOVE;
+	int i;
+	for(i = 0; i < node->kidsNumber; ++i) {
+		changeTokenType(node->kids[i]);
+	}
+	return;
+}
+
 Node* removeNullHead(Node* node) {
 	Node* nodeAux;
 	if (node->token == NULL) {

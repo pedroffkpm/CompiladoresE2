@@ -1,5 +1,7 @@
 #include "validation.h"
 
+Type scopeType;
+
 idList* createId(struct lexval *token1, struct lexval *token2, struct idList* next) {
 	idList* new = malloc(sizeof(idList));
 	new->id = malloc(sizeof(char) * (strlen(token1->value.str) + 1));
@@ -47,6 +49,7 @@ int addIdsToTable(idList* ids, Type type) {
 }
 
 void addFuncToTable(struct lexval* token, Type type, Param* param) {
+	scopeType = type;
 	Symbol* s = getSymbolOnTable(token->value.str);
     	if (s == NULL) {
 		addSymbol(FUNCTION, type, 1, param, token);
@@ -57,19 +60,23 @@ void addFuncToTable(struct lexval* token, Type type, Param* param) {
 }
 
 void addNodeToTable(Node* node, Type type, Nature nature, int size) {
-	Symbol* s = getSymbolOnTable(node->token->value.str);
-	if (s == NULL) {//FAZER
-		addSymbol(nature, type, size, NULL, node->token);
-		if(node->kidsNumber > 0) {
-			if(node->kids[0]->token->tokenType == IDS) {
-				addNodeToTable(node->kids[0], type, nature, size);
-			}
-			if(node->kids[0]->token->tokenType == COMP_OPER) {
-				addNodeToTable(node->kids[0]->kids[0], type, nature, size);
-			}
+	if(node->kidsNumber > 1) {
+		if(strcmp(node->token->value.str, "<=")) {
+			addNodeToTable(node->kids[0], type, nature, 1);
+		} else {
+			addNodeToTable(node->kids[0], type, nature, node->kids[1]->token->value.i);
 		}
-	} else {
-	//ERRO
+	}
+	else
+	{
+		Symbol* s = getSymbolOnTable(node->token->value.str);
+		if (s == NULL) {//FAZER
+			addSymbol(nature, type, size, NULL, node->token);
+			if(node->kidsNumber > 0)
+				addNodeToTable(node->kids[node->kidsNumber-1], type, nature, size);
+		} else {
+			//ERRO
+		}
 	}
 }
 
@@ -315,36 +322,49 @@ void isDeclaredRec(Node* node) {
 
 void validateInput(Node *node) {
 	Symbol* s = getSymbol(node->kids[0]->token->value.str);
-	if(s->type == INT && s->type == FLOAT) {
+	if(s->type == INT || s->type == FLOAT) {
 		return;
 	}
-	printTypeError(ERR_WRONG_PAR_INPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);	
+	printTypeError(ERR_WRONG_PAR_INPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);
+	exit(ERR_WRONG_PAR_INPUT);	
 	return;
 }
 
 void validateOutput(Node *node) {
 	Symbol* s = getSymbol(node->kids[0]->token->value.str);
-	if(s->type == INT && s->type == FLOAT) {
+	if(s->type == INT || s->type == FLOAT) {
 		return;
 	}
-	printTypeError(ERR_WRONG_PAR_OUTPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);	
+	printTypeError(ERR_WRONG_PAR_OUTPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);
+	exit(ERR_WRONG_PAR_OUTPUT);	
 	return;
 }
 
 void validateReturn(Node *node) {
-	return;
+	Symbol* s = getSymbol(node->kids[0]->token->value.str);
+	if(s->type == scopeType) {
+		popTable();
+		return;
+	}
+	printTypeError(ERR_WRONG_PAR_RETURN, node->token->lineNumber, s->type, node->varType, node->token->value.str);
+	exit(ERR_WRONG_PAR_RETURN);	
 }
 
 void validateShift(Node *node) {
 	if(node->kids[1]->token->value.i > 16) {
-		printShiftError(ERR_WRONG_PAR_SHIFT, node->token->lineNumber, node->kids[1]->token->value.i, node->kids[2]->token->value.str);
+		printShiftError(ERR_WRONG_PAR_SHIFT, node->token->lineNumber, node->kids[0]->token->value.i, node->kids[1]->token->value.str);
 		exit(ERR_WRONG_PAR_SHIFT);
 	}
 	return;
 }
 
 void validateAttribution(Node *node) {
-	Symbol* s = getSymbol(node->kids[0]->token->value.str);
+	Symbol* s;	
+	if(node->kids[0]->kidsNumber > 0) {
+		s = getSymbol(node->kids[0]->kids[0]->token->value.str);
+		} else {		
+	 	s = getSymbol(node->kids[0]->token->value.str);
+	}
 	if(s->type == node->kids[1]->varType) {
 		if(s->type == STRING_TYPE) {
 			if(s->size != sizeof(node->kids[1]->token->value.str)) {
