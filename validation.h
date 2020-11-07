@@ -16,5 +16,10 @@ void addFuncToTable(struct lexval* token, Type type, Param* param);
 
 void addNextId(struct idList* current,struct idList* next);
 
+void validateFunction(Node* node);
+
+void validateShift(Node *node);
+
+void addNodeToTable(Node* node, Type type, Nature nature, int size);
 
 #endif

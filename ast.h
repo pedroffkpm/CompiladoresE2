@@ -47,3 +47,5 @@ void nullifyPointer(struct lexval* token, Node *n);
 
 void contaNodosNaRaiz(Node *n);
 
+void changeTokenType(Node* node);
+
