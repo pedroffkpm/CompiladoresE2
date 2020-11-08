@@ -37,7 +37,7 @@ void changeTokenType(Node* node) {
 }
 
 Node* removeNullHead(Node* node) {
-	Node* nodeAux;
+	Node* nodeAux = NULL;
 	if (node->token == NULL) {
 		nodeAux = node->kids[0];
 		nodeAux->token = node->kids[0]->token;
@@ -50,12 +50,13 @@ Node* removeNullHead(Node* node) {
 			nodeAux->token = node->kids[0]->token;
 			nodeAux->kids = node->kids[0]->kids;
 			free(node->token);
+      //free instructions? mas se é NULL?
 			free(node);
 		}
 	}
 	return nodeAux;
 }
-int removeNullNode(Node* node) {
+int removeNullNode(Node* node) { //alterar pra instructions
 	int i,j;
 	int nullNode = 1;
 	Node* nodeAux;
@@ -113,6 +114,7 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->varType = -1;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
+  node->instructions = createList();
 	if(tokenType != NONE)
 		node->token->tokenType = tokenType;
 	return node;
@@ -123,6 +125,7 @@ Node* createDanglingNode(struct lexval* token) {
 	node->token = token;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
+  node->instructions = createList();
 	return node;
 }
 

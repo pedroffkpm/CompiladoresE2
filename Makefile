@@ -14,7 +14,7 @@ endif
 #parser.tab.c => output bison
 all: lex.yy.o
 
-	$(CC) $(CCFLAGS) main.c ast.c table.c validation.c lex.yy.o parser.tab.o -$(LFL) -o etapa4
+	$(CC) $(CCFLAGS) main.c ast.c table.c validation.c iloc.c lex.yy.o parser.tab.o -$(LFL) -o etapa4
 
 lex.yy.o: parser.y scanner.l
 	bison -d parser.y --verbose

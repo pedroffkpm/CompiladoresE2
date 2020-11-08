@@ -1,14 +1,22 @@
+#ifndef AST_H
+#define AST_H
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 
 #include "lexVal.h"
+#include "iloc.h"
 
 typedef struct node{
 	struct lexval* token;
 	Type varType;
 	int kidsNumber;
 	struct node **kids; // lista de ponteiros
+
+  InstructionList* instructions;
+
 } Node;
 
 void checkTree(void* voidNode);
@@ -49,3 +57,4 @@ void contaNodosNaRaiz(Node *n);
 
 void changeTokenType(Node* node);
 
+#endif

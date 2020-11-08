@@ -4,6 +4,7 @@
 #include "lexVal.h"
 #include "lex.yy.h"	
 #include "validation.h"
+#include "table.h"
     
 #define YYERROR_VERBOSE 1
 
@@ -195,10 +196,15 @@ ids: id_global ',' ids { $$ = $1;
 id_global: TK_IDENTIFICADOR {$$ = createId($1, NULL, NULL);}
          | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createId($1, $3, NULL);};
 
-funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = createNode($3, NONE); //reservada
+funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' abreEscopo bloco { $$ = createNode($3, NONE); //reservada
 								addType($$, $2);
-								addChild($$, $7); 
-								addFuncToTable($3, $2, $5);} ;
+								addChild($$, $8); 
+								addFuncToTable($3, $2, $5);
+
+                popTable();
+                } ;
+
+abreEscopo: %empty { pushTable(); };
 
 params_list_global: global_args_list { $$ = $1; }
                   | %empty { $$ = createParam(NULL, VAR); } ;
@@ -250,7 +256,8 @@ id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);}
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
 								addChild($$, $1);
-								addChild($$, $3);} ;
+								addChild($$, $3);
+                assignCode($$); } ;
 
 fluxo: if {$$ = $1;}
      | for {$$ = $1;}
