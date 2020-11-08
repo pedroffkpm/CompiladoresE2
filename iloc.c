@@ -3,6 +3,52 @@
 int register_counter = 0;
 int label_counter = 0;
 
+//################
+
+Instruction* jumpI(int label) {
+  return createInstruction(JUMPI, label, 0, 0);
+}
+
+Instruction* jump(int reg) {
+  return createInstruction(JUMP, reg, 0, 0);
+}
+
+Instruction* halt() {
+  return createInstruction(HALT, 0, 0, 0);
+}
+
+Instruction* addI(int reg, int op2, int dst) { //addI reg, c2 => r3 | dst = reg + op2
+    return createInstruction(ADDI, reg, op2, dst);
+}
+
+Instruction* loadI(int c, int reg) { //loadI c => reg | reg = c
+    return createInstruction(LOADI, c, reg, 0);
+}
+
+Instruction* loadAI(int src, int offset, int dst) { //loadAI src, offset => dest | dest = Memoria(src + offset)
+    return createInstruction(LOADAI, src, offset, dst);
+}
+
+Instruction* storeAI(int src, int dst, int offset) {
+    return createInstruction(STOREAI, src, dst, offset);
+}
+
+Instruction* i2i(int r1, int r2) {
+    return createInstruction(I2I, r1, r2, 0);
+}
+
+int getRegister() {
+  register_counter++;
+  return register_counter;
+}
+
+int getLabel() {
+  label_counter++;
+  return label_counter;
+}
+
+//###############
+
 InstructionList* createList() {
   InstructionList* list = (InstructionList*) malloc((sizeof(InstructionList)));
   list->inst_num = 0;
@@ -52,55 +98,54 @@ Instruction* createInstruction(OpCode op, int arg1, int arg2, int arg3) {
   return inst;
 }
 
+//#################################
+
+void intCode(Node* node) {
+  node->regTemp = getRegister();
+
+  addInstToList(loadI(node->token->value.i, node->regTemp), node->instructions); //valor do int está em node->regTemp
+}
+
+void loadVarToReg(Node* node) {
+  node->regTemp = getRegister();
+
+  Symbol* aux = getSymbol(node->token->value.str);
+
+  if(aux != NULL) {
+    int x = getRegister();
+    if(getScopeForKey(aux->key) == 0) {
+      addInstToList(addI(RBSS, aux->offset, x), node->instructions);
+    } else {
+      addInstToList(addI(RFP, aux->offset, x), node->instructions);
+    }
+    //x contém end(var)
+
+    addInstToList(loadAI(x, 0, node->regTemp), node->instructions); //node->temp = Mem(x + 0)
+  }
+
+  aux = NULL;
+
+}
+
+
 void assignCode(Node* node) {
   node->instructions = concatLists(node->instructions, node->kids[1]->instructions);
-  int exprReg = register_counter; //reg tá com o último valor, que é o da expressao
+  int exprReg = node->kids[1]->regTemp;
 
   Symbol* aux = getSymbol(node->kids[0]->token->value.str);
 
   if(aux != NULL) {
-    int reg = getRegister();
+    node->regTemp = getRegister();
     if(getScopeForKey(aux->key) == 0) {
-      addInstToList(addI(RBSS, aux->offset, reg), node->instructions);
+      addInstToList(addI(RBSS, aux->offset, node->regTemp), node->instructions); // end(id) => node->regTemp
     } else {
-      addInstToList(addI(RFP, aux->offset, reg), node->instructions);
+      addInstToList(addI(RFP, aux->offset, node->regTemp), node->instructions);
     }
 
-    addInstToList(storeAI(exprReg, reg, 0), node->instructions);
+    addInstToList(storeAI(exprReg, node->regTemp, 0), node->instructions); // Mem(end(id) + 0) = exprReg
   }
 
+  aux = NULL;
   //get address
   //addInst LOAD
-}
-
-
-//################
-
-Instruction* addI(int op1, int op2, int dst) {
-    return createInstruction(ADDI, op1, op2, dst);
-}
-Instruction* rsubI(int reg, int op, int dst) {
-    return createInstruction(RSUBI, reg, op, dst);
-}
-Instruction* loadI(int value, int reg) {
-    return createInstruction(LOADI, value, reg, 0);
-}
-Instruction* loadAI(int src, int offset, int dst) {
-    return createInstruction(LOADAI, src, offset, dst);
-}
-Instruction* storeAI(int src, int dst, int offset) {
-    return createInstruction(STOREAI, src, dst, offset);
-}
-Instruction* i2i(int r1, int r2) {
-    return createInstruction(I2I, r1, r2, 0);
-}
-
-int getRegister() {
-  register_counter++;
-  return register_counter;
-}
-
-int getLabel() {
-  label_counter++;
-  return label_counter;
 }

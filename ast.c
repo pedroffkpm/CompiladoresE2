@@ -115,6 +115,7 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
   node->instructions = createList();
+  node->regTemp = -4; //ILOC.H -> -3 a -1 são reservados (RBSS, RFP e RSP)
 	if(tokenType != NONE)
 		node->token->tokenType = tokenType;
 	return node;
@@ -126,6 +127,7 @@ Node* createDanglingNode(struct lexval* token) {
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
   node->instructions = createList();
+  node->regTemp = -4;
 	return node;
 }
 

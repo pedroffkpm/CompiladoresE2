@@ -356,9 +356,10 @@ parenteses_ou_operando:
    	| func_call { $$ = $1; } ;
 
 operandos:
-	id_expr { $$ = $1;}
+	id_expr { $$ = $1; loadVarToReg($$); }
 	| TK_LIT_INT { $$ = createNode($1, NONE);
-								addType($$, INT_TYPE); }
+								addType($$, INT_TYPE);
+                intCode($$); }
        	| TK_LIT_FLOAT { $$ = createNode($1, NONE);
 								addType($$, FLOAT_TYPE); }
        	| TK_LIT_FALSE { $$ = createNode($1, NONE);

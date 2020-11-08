@@ -13,6 +13,7 @@ typedef struct node{
 	struct lexval* token;
 	Type varType;
 	int kidsNumber;
+  int regTemp; //registrador temporário
 	struct node **kids; // lista de ponteiros
 
   InstructionList* instructions;
