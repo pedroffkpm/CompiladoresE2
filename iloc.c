@@ -37,6 +37,10 @@ Instruction* i2i(int r1, int r2) {
     return createInstruction(I2I, r1, r2, 0);
 }
 
+Instruction* cbr(int r, int label_true, int label_false) {
+  return createInstruction(CBR, r, label_true, label_false);
+}
+
 int getRegister() {
   register_counter++;
   return register_counter;
@@ -93,7 +97,6 @@ Instruction* createInstruction(OpCode op, int arg1, int arg2, int arg3) {
   inst->arg1 = arg1;
   inst->arg2 = arg2;
   inst->arg3 = arg3;
-  inst->label = -1; //sinaliza que n tem label ainda
 
   return inst;
 }
@@ -106,7 +109,7 @@ void intCode(Node* node) {
   addInstToList(loadI(node->token->value.i, node->regTemp), node->instructions); //valor do int está em node->regTemp
 }
 
-void loadVarToReg(Node* node) {
+void loadVarToRegCode(Node* node) {
   node->regTemp = getRegister();
 
   Symbol* aux = getSymbol(node->token->value.str);
@@ -124,9 +127,7 @@ void loadVarToReg(Node* node) {
   }
 
   aux = NULL;
-
 }
-
 
 void assignCode(Node* node) {
   node->instructions = concatLists(node->instructions, node->kids[1]->instructions);
@@ -148,4 +149,149 @@ void assignCode(Node* node) {
   aux = NULL;
   //get address
   //addInst LOAD
+}
+
+void binOpCode(Node* node) { //unico jeito de pegar o tipo de operacao
+  //operacoes binarias vao usar os registradores temporarios dos nodos filhos
+
+  switch (node->token->tokenType)
+  {
+  case SPEC_CHAR:
+    if((node->token->value.c == '<') || (node->token->value.c == '>') || (node->token->value.c == '!')) {
+      booleanCode(node);
+    }
+    arithmeticCode(node);
+    break;
+  case COMP_OPER:
+    booleanCode(node); //shift right e shift left são aritméticos
+    break;
+  default:
+    break;
+  }
+}
+
+void arithmeticCode(Node* node) { //pra diferenciar a op tem que fazer ifs
+
+OpCode op = NOP;
+  if(node->token->value.c == '+') {
+    op = ADD; //versao das operacoes que so usam regs
+  }
+  if(node->token->value.c == '-') {
+    op = SUB; //versao das operacoes que so usam regs
+  }
+  if(node->token->value.c == '/') {
+    op = DIV; //versao das operacoes que so usam regs
+  }
+  if(node->token->value.c == '*') {
+    op = MULT; //versao das operacoes que so usam regs
+  }
+
+  node->instructions = concatLists(node->kids[0]->instructions, node->kids[1]->instructions); // E.code = E1.code || E2.code
+  node->regTemp = getRegister();
+
+  addInstToList(createInstruction(op, node->kids[0]->regTemp, node->kids[1]->regTemp, node->regTemp), node->instructions);
+}
+
+void booleanCode(Node* node) { //pra diferenciar => strcmp
+  if (node->token->value.c == '<') {
+    relopCode(node, CMP_LT);
+  }
+
+  else if (strcmp(node->token->value.str, "<=") == 0) {
+    relopCode(node, CMP_LE);
+  }
+
+  else if (strcmp(node->token->value.str, "==") == 0) {
+    relopCode(node, CMP_EQ);
+  }
+
+  else if (strcmp(node->token->value.str, ">=") == 0) {
+    relopCode(node, CMP_GE);
+  }
+
+  else if (node->token->value.c == '>') {
+    relopCode(node, CMP_GT);
+  }
+
+  else if (strcmp(node->token->value.str, "!=") == 0) {
+      relopCode(node, CMP_NE);
+  }
+
+  else {
+    logicCode(node);
+  }
+
+}
+
+void relopCode(Node* node, OpCode op) {
+
+  int trueLabel = getLabel();
+  int falseLabel = getLabel();
+
+  addTrueList(node, trueLabel);
+  addFalseList(node, falseLabel);
+
+  node->instructions = concatLists(node->kids[0]->instructions, node->kids[1]->instructions);
+  node->regTemp = getRegister();
+
+  addInstToList(createInstruction(op, node->kids[0]->regTemp, node->kids[1]->regTemp, node->regTemp), node->instructions);
+  addInstToList(cbr(node->regTemp, trueLabel, falseLabel), node->instructions);
+
+}
+
+void remendaTrue(Node* node, int newLabel) {
+  for (int i = 0; i < node->trueListSize; i++)
+  { //trocar node->tl[i] por newLabel
+  for (int j = node->instructions->inst_num-1; j >= 0; j--)
+  {//segundo campo das cbr
+    if(node->instructions->instructions[j]->op_code == CBR) {
+      if(node->instructions->instructions[j]->arg2 == node->tl[i]) {
+        Instruction* newCBR = cbr(node->instructions->instructions[j]->arg1, newLabel, node->instructions->instructions[j]->arg3);
+        free(node->instructions->instructions[j]);
+        node->instructions->instructions[j] = newCBR;
+        newCBR = NULL;
+      }
+    }
+  }
+  }
+}
+
+void remendaFalse(Node* node, int newLabel) {
+  for (int i = 0; i < node->falseListSize; i++)
+  { //trocar node->fl[i] por newLabel
+  for (int j = node->instructions->inst_num-1; j >= 0; j--)
+  {//itera por todas as instrucoes
+    if(node->instructions->instructions[j]->op_code == CBR) { //se for CBR
+      if(node->instructions->instructions[j]->arg3 == node->fl[i]) { //se o arg3 for uma das labels a ser trocada
+      Instruction* newCBR = cbr(node->instructions->instructions[j]->arg1, node->instructions->instructions[j]->arg2, newLabel);
+      free(node->instructions->instructions[j]); //funciona?
+        node->instructions->instructions[j] = newCBR;
+        newCBR = NULL;
+      }
+    }
+  }
+  }
+}
+
+void logicCode(Node* node) {
+
+  int x = getLabel();
+
+  if(strcmp(node->token->value.str, "&&") == 0) {
+    remendaTrue(node->kids[0], x);
+    concatTrueL(node, node->kids[1]); // B.tl = B2.tl
+    concatFalseL(node, node->kids[0]); //B.fl = NULL || B1.fl
+    concatFalseL(node, node->kids[1].fl); //B.fl = B1.fl || B2.fl
+  }
+
+  if(strcmp(node->token->value.str, "||") == 0) {
+    remendaFalse(node->kids[0], x);
+    concatFalseL(node, node->kids[1]); //B.fl = B2.fl
+    concatTrueL(node, node->kids[0]); //B.tl = NULL || B1.tl
+    concatTrueL(node, node->kids[1]); //B.tl = B1.tl || B2.tl
+  }
+  node->instructions = concatLists(node->kids[0]->instructions, node->instructions); //B.code = B1.code
+  addInstToList(createInstruction(LBL, x, 0, 0), node->instructions); //B.code = B1.code || "Lx: "
+  node->instructions = concatLists(node->instructions, node->kids[1]->instructions); //B.code = B1.code || "Lx: " || B2.code
+
 }

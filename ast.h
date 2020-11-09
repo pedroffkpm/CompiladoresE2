@@ -16,6 +16,12 @@ typedef struct node{
   int regTemp; //registrador temporário
 	struct node **kids; // lista de ponteiros
 
+  int trueListSize;
+  int** tl;
+
+  int falseListSize;
+  int** fl;
+
   InstructionList* instructions;
 
 } Node;
@@ -57,5 +63,13 @@ void nullifyPointer(struct lexval* token, Node *n);
 void contaNodosNaRaiz(Node *n);
 
 void changeTokenType(Node* node);
+
+void addTrueList(Node* node, int label);
+
+void concatTrueL(Node* node1, Node* node2);
+
+void concatFalseL(Node* node1, Node* node2);
+
+void addFalseList(Node* node, int label);
 
 #endif

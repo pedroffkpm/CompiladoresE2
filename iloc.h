@@ -10,7 +10,8 @@ typedef enum { //negativos para não conflitar com registradores criados com get
 
 typedef enum
 {
-  NOP, // nop
+  LBL = -1, // Lr1: 
+  NOP, // nop 
   ADD, // r3 = r1 + r2 | registradores
   ADDI, // r3 = r1 + c2 (constante/offset)
   SUB, // r3 = r1 - r2
@@ -45,7 +46,6 @@ typedef enum
 typedef struct Instruction
 {
   OpCode op_code; //sabe pelo code se arg é reg, label, constante, etc
-  int label;
   int arg1;
   int arg2;
   int arg3;
@@ -85,11 +85,13 @@ Instruction* i2i(int r1, int r2);
 Instruction* jumpI(int label);
 Instruction* jump(int reg);
 
+Instruction* cbr(int r, int label_true, int label_false);
+
 Instruction* halt();
 
 //code
 
-void loadVarToReg(Node* node);
+void loadVarToRegCode(Node* node);
 
 void intCode(Node* node);
 
@@ -97,6 +99,14 @@ void binOpCode(Node* node);
 
 void arithmeticCode(Node* node);
 
+void booleanCode(Node* node);
+
 void logicCode(Node* node);
+
+void remendaTrue(Node* node, int newLabel);
+
+void remendaFalse(Node* node, int newLabel);
+
+void relopCode(Node* node, OpCode op);
 
 void assignCode(Node* node);

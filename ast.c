@@ -116,6 +116,13 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->kids = (Node**)malloc(sizeof(Node**));
   node->instructions = createList();
   node->regTemp = -4; //ILOC.H -> -3 a -1 são reservados (RBSS, RFP e RSP)
+
+  node->trueListSize = 0;
+  node->tl = NULL;
+
+  node->falseListSize = 0;
+  node->fl = NULL;
+
 	if(tokenType != NONE)
 		node->token->tokenType = tokenType;
 	return node;
@@ -128,6 +135,12 @@ Node* createDanglingNode(struct lexval* token) {
 	node->kids = (Node**)malloc(sizeof(Node**));
   node->instructions = createList();
   node->regTemp = -4;
+
+  node->trueListSize = 0;
+  node->tl = NULL;
+  node->falseListSize = 0;
+  node->fl = NULL;
+
 	return node;
 }
 
@@ -342,5 +355,37 @@ void libera(void* voidNode) {
 	}
 }
 
+void addTrueList(Node* node, int label) {
+  node->trueListSize++;
 
+  if(node->tl == NULL) {
+    node->tl = (int**) malloc(sizeof(int*));
+  } else { //append no final da lista
+    node->tl = (int**) realloc(node->tl, sizeof(int*) * node->trueListSize);
+  }
+  node->tl[node->trueListSize-1] = label;
+}
+
+void addFalseList(Node* node, int label) {
+  node->falseListSize++;
+
+  if(node->fl == NULL) {
+    node->fl = (int**) malloc(sizeof(int*));
+  } else { //append no final da lista
+    node->fl = (int**) realloc(node->fl, sizeof(int*) * node->falseListSize);
+  }
+  node->fl[node->falseListSize-1] = label;
+}
+
+void concatTrueL(Node* node1, Node* node2) {
+  for(int i = 0; i < node2->trueListSize; i++) {
+    addTrueList(node1, node2->tl[i]);
+  }
+}
+
+void concatFalseL(Node* node1, Node* node2) {
+  for(int i = 0; i < node2->falseListSize; i++) {
+    addFalseList(node1, node2->fl[i]);
+  }
+}
 

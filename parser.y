@@ -341,7 +341,8 @@ expressao:
 	parenteses_ou_operando operador_binario expressao { $$ = $2;
 								addType($$, inferType($1->varType, $3->varType));
 								addChild($$, $1);
-								addChild($$, $3); }
+								addChild($$, $3);
+                binOpCode($$); }
 	|parenteses_ou_operando operador_ternario expressao { $$ = $2;
 								addType($$, inferType($2->kids[0]->varType, $3->varType));
 								addChild($$, $1);
@@ -356,7 +357,7 @@ parenteses_ou_operando:
    	| func_call { $$ = $1; } ;
 
 operandos:
-	id_expr { $$ = $1; loadVarToReg($$); }
+	id_expr { $$ = $1; loadVarToRegCode($$); }
 	| TK_LIT_INT { $$ = createNode($1, NONE);
 								addType($$, INT_TYPE);
                 intCode($$); }
@@ -370,7 +371,7 @@ operandos:
 operador_unario:
 	'+' { $$ = createNode($1, NONE); }
 	| '-' { $$ = createNode($1, NONE); } 
-	| '!' { $$ = createNode($1, NONE); }
+	| '!' { $$ = createNode($1, NONE); //logico}
 	| '&' { $$ = createNode($1, NONE); } 
 	| '*' { $$ = createNode($1, NONE); }
 	| '?' { $$ = createNode($1, NONE); } 
@@ -385,12 +386,12 @@ operador_binario:
 	| '|' { $$ = createNode($1, NONE); }
 	| '&' { $$ = createNode($1, NONE); } 
 	| '^' { $$ = createNode($1, NONE); } 
-	| TK_OC_LE { $$ = createNode($1, NONE); }
-	| TK_OC_GE { $$ = createNode($1, NONE); } 
-	| TK_OC_EQ { $$ = createNode($1, NONE); }
-	| TK_OC_NE { $$ = createNode($1, NONE); } 
-	| TK_OC_AND { $$ = createNode($1, NONE); } 
-	| TK_OC_OR { $$ = createNode($1, NONE); };
+	| TK_OC_LE { $$ = createNode($1, NONE); //logico}
+	| TK_OC_GE { $$ = createNode($1, NONE); //logico} 
+	| TK_OC_EQ { $$ = createNode($1, NONE); //logico}
+	| TK_OC_NE { $$ = createNode($1, NONE); //logico} 
+	| TK_OC_AND { $$ = createNode($1, NONE); //logico} 
+	| TK_OC_OR { $$ = createNode($1, NONE); //logico};
 
 operador_ternario:
 	'?' expressao ':' { $$ = createNode($1, TERN_OP);
