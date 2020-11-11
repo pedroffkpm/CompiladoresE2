@@ -281,7 +281,7 @@ void logicCode(Node* node) {
     remendaTrue(node->kids[0], x);
     concatTrueL(node, node->kids[1]); // B.tl = B2.tl
     concatFalseL(node, node->kids[0]); //B.fl = NULL || B1.fl
-    concatFalseL(node, node->kids[1].fl); //B.fl = B1.fl || B2.fl
+    concatFalseL(node, node->kids[1]); //B.fl = B1.fl || B2.fl
   }
 
   if(strcmp(node->token->value.str, "||") == 0) {
@@ -294,4 +294,150 @@ void logicCode(Node* node) {
   addInstToList(createInstruction(LBL, x, 0, 0), node->instructions); //B.code = B1.code || "Lx: "
   node->instructions = concatLists(node->instructions, node->kids[1]->instructions); //B.code = B1.code || "Lx: " || B2.code
 
+}
+
+//###########################
+
+char* special_register(Register nmr) {
+  switch (nmr)
+  {
+  case RFP:
+    return "rfp";
+    break;
+  case RSP:
+    return "rsp";
+    break;
+  case RBSS:
+    return "rbss";
+    break;
+  case RPC:
+    return "rpc";
+    break;
+  default:
+    return "";
+    break;
+  }
+}
+
+void printCode(InstructionList list) {
+  for (int i = 0; i < list.inst_num; i++)
+  {
+    printInstruction(list.instructions[i]);
+  }
+}
+
+void printInstruction(Instruction *instruction)
+{
+  switch (instruction->op_code)
+  {
+  case LBL:
+    printf("L%d \n", instruction->arg1);
+    break;
+  case NOP:
+    printf("nop \n");
+    break;
+  case ADD:
+    printf("add r%d, r%d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case ADDI:
+    printf("addI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case SUB:
+    printf("sub r%d, r%d => r%d\n",  instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case SUBI:
+    printf("subI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case RSUBI:
+    printf("rsubI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case MULT:
+    printf("mult r%d, r%d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case MULTI:
+    printf("multI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case DIV:
+    printf("div r%d, r%d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case DIVI:
+    printf("divI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case RDIVI:
+    printf("rdivI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case LOADI: // r2 = c1 | constante
+    if(instruction->arg2 < 0)
+      printf("loadI %d => %s\n", instruction->arg1, special_register(instruction->arg2));
+    else
+      printf("loadI %d => r%d\n", instruction->arg1, instruction->arg2);
+    break;
+  case LOADA0: //só usar especial como 1o arg
+    if(instruction->arg1 < 0)
+      printf("loadA0 %s, r%d => r%d\n", special_register(instruction->arg1), instruction->arg2, instruction->arg3);
+    else
+      printf("loadA0 r%d, r%d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case LOADAI: // r3 = Mem(r1 + c2) | constante/offset
+    if(instruction->arg1 < 0)
+      printf("loadAI %s, %d => r%d\n", special_register(instruction->arg1), instruction->arg2, instruction->arg3);
+    else //acho que só é usado com os especiais
+      printf("loadAI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case STOREAI: // storeAI r1 => r2, c3 | Mem(r2 + c3) = r1
+    if(instruction->arg2 < 0)
+      printf("storeAI r%d => %s, %d\n", instruction->arg1, special_register(instruction->arg2), instruction->arg3);
+    else
+      printf("storeAI r%d => r%d, %d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case STOREA0:
+    if(instruction->arg2 < 0)
+      printf("storeA0 r%d => %s, r%d\n", instruction->arg1, special_register(instruction->arg2), instruction->arg3);
+    else
+      printf("storeA0 r%d => r%d, r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case I2I: //i2i r1 => r2 | r1 = r2 para inteiros
+    if (instruction->arg1 < 0 && instruction->arg2 < 0) {
+      printf("i2i %s => %s\n", special_register(instruction->arg1), special_register(instruction->arg2));
+    } else if (instruction->arg1 < 0) {
+      printf("i2i %s => r%d\n", special_register(instruction->arg1), instruction->arg2);
+    } else if (instruction->arg2 < 0) {
+      printf("i2i r%d => %s\n", instruction->arg1, special_register(instruction->arg2));
+    } else {
+      printf("i2i r%d => r%d\n", instruction->arg1, instruction->arg2);
+    }
+    break;
+  case JUMPI:
+    printf("jumpI -> L%d\n", instruction->arg1);
+    break;
+  case JUMP:
+    printf("jump -> r%d\n", instruction->arg1);
+    break;
+  case CBR: // cbr r1 -> l2, l3 | r1 ? pc = endereco(l2) : pc=endereco(l3)
+    printf("cbr r%d -> L%d, L%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case CMP_LT:
+    printf("cmp_LT r%d, r%d -> r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case CMP_LE:
+    printf("cmp_LE r%d, r%d -> r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case CMP_EQ:
+    printf("cmp_EQ r%d, r%d -> r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case CMP_GE:
+    printf("cmp_GE r%d, r%d -> r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case CMP_GT:
+    printf("cmp_GT r%d, r%d -> r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case CMP_NE:
+    printf("cmp_NE r%d, r%d -> r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    break;
+  case HALT:
+    printf("halt\n");
+    break;
+  default:
+    break;
+  }
 }

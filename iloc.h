@@ -3,9 +3,10 @@
 #include "table.h"
 
 typedef enum { //negativos para não conflitar com registradores criados com getRegister()
-    RBSS = -3,
-    RFP,
-    RSP
+    RFP = -4,
+    RSP,
+    RBSS,
+    RPC
 } Register;
 
 typedef enum
