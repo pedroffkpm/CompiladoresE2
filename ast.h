@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #include "lexVal.h"
-#include "iloc.h"
+#include "instructions.h"
 
 typedef struct node{
 	struct lexval* token;
@@ -16,11 +16,11 @@ typedef struct node{
   int regTemp; //registrador temporário
 	struct node **kids; // lista de ponteiros
 
-  int trueListSize;
-  int** tl;
+  int trueNmr;
+  int* tl;
 
-  int falseListSize;
-  int** fl;
+  int falseNmr;
+  int* fl;
 
   InstructionList* instructions;
 

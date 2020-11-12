@@ -5,6 +5,7 @@
 #include "lex.yy.h"	
 #include "validation.h"
 #include "table.h"
+#include "iloc.h"
     
 #define YYERROR_VERBOSE 1
 
@@ -371,7 +372,7 @@ operandos:
 operador_unario:
 	'+' { $$ = createNode($1, NONE); }
 	| '-' { $$ = createNode($1, NONE); } 
-	| '!' { $$ = createNode($1, NONE); //logico}
+	| '!' { $$ = createNode($1, NONE); }
 	| '&' { $$ = createNode($1, NONE); } 
 	| '*' { $$ = createNode($1, NONE); }
 	| '?' { $$ = createNode($1, NONE); } 
@@ -386,12 +387,12 @@ operador_binario:
 	| '|' { $$ = createNode($1, NONE); }
 	| '&' { $$ = createNode($1, NONE); } 
 	| '^' { $$ = createNode($1, NONE); } 
-	| TK_OC_LE { $$ = createNode($1, NONE); //logico}
-	| TK_OC_GE { $$ = createNode($1, NONE); //logico} 
-	| TK_OC_EQ { $$ = createNode($1, NONE); //logico}
-	| TK_OC_NE { $$ = createNode($1, NONE); //logico} 
-	| TK_OC_AND { $$ = createNode($1, NONE); //logico} 
-	| TK_OC_OR { $$ = createNode($1, NONE); //logico};
+	| TK_OC_LE { $$ = createNode($1, NONE); }
+	| TK_OC_GE { $$ = createNode($1, NONE); } 
+	| TK_OC_EQ { $$ = createNode($1, NONE); }
+	| TK_OC_NE { $$ = createNode($1, NONE); } 
+	| TK_OC_AND { $$ = createNode($1, NONE);} 
+	| TK_OC_OR { $$ = createNode($1, NONE); };
 
 operador_ternario:
 	'?' expressao ':' { $$ = createNode($1, TERN_OP);

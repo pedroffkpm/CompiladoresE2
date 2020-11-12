@@ -89,4 +89,6 @@ int convertType(Type from, Type to);
 
 int getScopeForKey(char *key);
 
+int getScope(SymbolTable* table);
+
 #endif

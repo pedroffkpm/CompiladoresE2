@@ -43,6 +43,9 @@ Node* removeNullHead(Node* node) {
 		nodeAux->token = node->kids[0]->token;
 		nodeAux->kids = node->kids[0]->kids;
 		free(node->token);
+    free(node->tl);
+    free(node->fl);
+    freeList(node->instructions);
 		free(node);
 	} else {
 		if (node->token->tokenType == REMOVE) {
@@ -50,6 +53,9 @@ Node* removeNullHead(Node* node) {
 			nodeAux->token = node->kids[0]->token;
 			nodeAux->kids = node->kids[0]->kids;
 			free(node->token);
+      free(node->tl);
+      free(node->fl);
+      freeList(node->instructions);
       //free instructions? mas se é NULL?
 			free(node);
 		}
@@ -117,10 +123,10 @@ Node* createNode(struct lexval *token, int tokenType) {
   node->instructions = createList();
   node->regTemp = -4; //ILOC.H -> -3 a -1 são reservados (RBSS, RFP e RSP)
 
-  node->trueListSize = 0;
+  node->trueNmr = 0;
   node->tl = NULL;
 
-  node->falseListSize = 0;
+  node->falseNmr = 0;
   node->fl = NULL;
 
 	if(tokenType != NONE)
@@ -136,9 +142,9 @@ Node* createDanglingNode(struct lexval* token) {
   node->instructions = createList();
   node->regTemp = -4;
 
-  node->trueListSize = 0;
+  node->trueNmr = 0;
   node->tl = NULL;
-  node->falseListSize = 0;
+  node->falseNmr = 0;
   node->fl = NULL;
 
 	return node;
@@ -188,6 +194,9 @@ void freeDanglingParser(Node* node) {
 				free(node->token->value.str);			
 			}
 			free(node->token);
+      free(node->tl);
+      free(node->fl);
+      freeList(node->instructions);
 		}
 		free(node);
 	}
@@ -285,6 +294,9 @@ void freeDanglingScanner(Node* node) {
 					free(node->token->value.str);
 				}
 				free(node->token);
+        free(node->tl);
+        free(node->fl);
+        freeList(node->instructions);
 			}
 		}
 		free(node);
@@ -351,40 +363,43 @@ void libera(void* voidNode) {
 				free(node->token->value.str);		
 		}
 		free(node->token);
+    free(node->tl);
+    free(node->fl);
+    freeList(node->instructions);
 		free(node);	
 	}
 }
 
 void addTrueList(Node* node, int label) {
-  node->trueListSize++;
+  node->trueNmr++;
 
   if(node->tl == NULL) {
-    node->tl = (int**) malloc(sizeof(int*));
+    node->tl = (int*) malloc(sizeof(int));
   } else { //append no final da lista
-    node->tl = (int**) realloc(node->tl, sizeof(int*) * node->trueListSize);
+    node->tl = (int*) realloc(node->tl, sizeof(int) * node->trueNmr);
   }
-  node->tl[node->trueListSize-1] = label;
+  node->tl[node->trueNmr-1] = label;
 }
 
 void addFalseList(Node* node, int label) {
-  node->falseListSize++;
+  node->falseNmr++;
 
   if(node->fl == NULL) {
-    node->fl = (int**) malloc(sizeof(int*));
+    node->fl = (int*) malloc(sizeof(int));
   } else { //append no final da lista
-    node->fl = (int**) realloc(node->fl, sizeof(int*) * node->falseListSize);
+    node->fl = (int*) realloc(node->fl, sizeof(int) * node->falseNmr);
   }
-  node->fl[node->falseListSize-1] = label;
+  node->fl[node->falseNmr-1] = label;
 }
 
 void concatTrueL(Node* node1, Node* node2) {
-  for(int i = 0; i < node2->trueListSize; i++) {
+  for(int i = 0; i < node2->trueNmr; i++) {
     addTrueList(node1, node2->tl[i]);
   }
 }
 
 void concatFalseL(Node* node1, Node* node2) {
-  for(int i = 0; i < node2->falseListSize; i++) {
+  for(int i = 0; i < node2->falseNmr; i++) {
     addFalseList(node1, node2->fl[i]);
   }
 }
