@@ -13,7 +13,7 @@ typedef enum { //negativos para não conflitar com registradores criados com get
 
 typedef enum
 {
-  LBL = -1, // Lr1: 
+  LBL = -1, // Lc1: 
   NOP, // nop 
   ADD, // r3 = r1 + r2 | registradores
   ADDI, // r3 = r1 + c2 (constante/offset)
@@ -80,6 +80,9 @@ Instruction* createInstruction(OpCode op, int arg1, int arg2, int arg3);
 //#####
 
 //instructions
+
+Instruction* lbl(int label);
+
 Instruction* addI(int reg, int op, int dst);
 
 Instruction* loadI(int c, int reg);

@@ -16,7 +16,7 @@ void validateProgram(void *arvore);
 int main (int argc, char **argv)
 {
   int ret = yyparse(); 
-  exporta(arvore); //essa chamada vai ser comentada!
+  exporta(arvore); //essa chamada vai ser comentada! 
   // printCode(arvore.instructions); //arvore precisa ser Node* e precisa ser a raiz
   libera(arvore);
   arvore = NULL;

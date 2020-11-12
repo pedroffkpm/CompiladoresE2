@@ -14,6 +14,8 @@ void intCode(Node* node);
 
 void binOpCode(Node* node);
 
+void ternOpCode(Node* node);
+
 void arithmeticCode(Node* node);
 
 void booleanCode(Node* node);

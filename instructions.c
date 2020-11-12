@@ -5,6 +5,10 @@ int label_counter = 0;
 
 //################
 
+Instruction* lbl(int label) {
+  return createInstruction(LBL, label, 0, 0);
+}
+
 Instruction* jumpI(int label) {
   return createInstruction(JUMPI, label, 0, 0);
 }

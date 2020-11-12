@@ -139,37 +139,35 @@ void relopCode(Node* node, OpCode op) {
 
 }
 
-void remendaTrue(Node* node, int newLabel) {
-  for (int i = 0; i < node->trueNmr; i++)
-  { //trocar node->tl[i] por newLabel
-  for (int j = node->instructions->inst_num-1; j >= 0; j--)
-  {//segundo campo das cbr
-    if(node->instructions->instructions[j]->op_code == CBR) {
-      if(node->instructions->instructions[j]->arg2 == node->tl[i]) {
-        Instruction* newCBR = cbr(node->instructions->instructions[j]->arg1, newLabel, node->instructions->instructions[j]->arg3);
-        free(node->instructions->instructions[j]);
-        node->instructions->instructions[j] = newCBR;
-        newCBR = NULL;
+void remendaTrue(Node *node, int newLabel)
+{
+  for (int i = 0; i < node->trueNmr; i++) { //trocar node->tl[i] por newLabel
+    for (int j = node->instructions->inst_num - 1; j >= 0; j--) { //segundo campo das cbr
+      if (node->instructions->instructions[j]->op_code == CBR) {
+        if (node->instructions->instructions[j]->arg2 == node->tl[i]) {
+          node->instructions->instructions[j]->arg2 = newLabel;
+        }
       }
     }
-  }
   }
 }
 
-void remendaFalse(Node* node, int newLabel) {
+//x && y && z && w
+
+void remendaFalse(Node *node, int newLabel)
+{
   for (int i = 0; i < node->falseNmr; i++)
   { //trocar node->fl[i] por newLabel
-  for (int j = node->instructions->inst_num-1; j >= 0; j--)
-  {//itera por todas as instrucoes
-    if(node->instructions->instructions[j]->op_code == CBR) { //se for CBR
-      if(node->instructions->instructions[j]->arg3 == node->fl[i]) { //se o arg3 for uma das labels a ser trocada
-      Instruction* newCBR = cbr(node->instructions->instructions[j]->arg1, node->instructions->instructions[j]->arg2, newLabel);
-      free(node->instructions->instructions[j]); //funciona?
-        node->instructions->instructions[j] = newCBR;
-        newCBR = NULL;
+    for (int j = node->instructions->inst_num - 1; j >= 0; j--)
+    { //itera por todas as instrucoes
+      if (node->instructions->instructions[j]->op_code == CBR)
+      { //se for CBR
+        if (node->instructions->instructions[j]->arg3 == node->fl[i])
+        { //se o arg3 for uma das labels a ser trocada
+          node->instructions->instructions[j]->arg3 = newLabel;
+        }
       }
     }
-  }
   }
 }
 
@@ -191,8 +189,36 @@ void logicCode(Node* node) {
     concatTrueL(node, node->kids[1]); //B.tl = B1.tl || B2.tl
   }
   node->instructions = concatLists(node->kids[0]->instructions, node->instructions); //B.code = B1.code
-  addInstToList(createInstruction(LBL, x, 0, 0), node->instructions); //B.code = B1.code || "Lx: "
+  addInstToList(lbl(x), node->instructions); //B.code = B1.code || "Lx: "
+  node->label = x; //esse tipo de instrução TEM uma label! 
   node->instructions = concatLists(node->instructions, node->kids[1]->instructions); //B.code = B1.code || "Lx: " || B2.code
+
+}
+
+void ternOpCode(Node* node) { // (kids[1]/condition) ? (kids[0]/if) : (kids[2]/else)
+//int x = (5 == 5) ? 3 : 2;
+//preciso pegar o registrador do tern pra usar no assign
+//preciso passar o valor do registrador que avaliou (true ou false) pra cá
+
+  int x = getLabel();
+  int y = getLabel();
+
+  remendaTrue(node->kids[1], x);
+  remendaFalse(node->kids[1], y);
+  node->label = getLabel();
+  node->regTemp = getRegister(); //precisa achar um jeito de passar o resultado pra cá
+
+  node->instructions = concatLists(node->kids[1]->instructions, node->instructions); //S.code = B.code
+  addInstToList(lbl(x), node->instructions); // S.code = B.code || "Lx: "
+  node->instructions = concatLists(node->instructions, node->kids[0]->instructions); // S.code = B.code || "Lx: " || S1.code
+  addInstToList(i2i(node->kids[0]->regTemp, node->regTemp), node->instructions); // pega o valor do registrador true
+  addInstToList(jumpI(node->label), node->instructions); // || jump Lz
+  addInstToList(lbl(y), node->instructions); // || "Ly: "
+  node->instructions = concatLists(node->instructions, node->kids[2]->instructions);
+  addInstToList(i2i(node->kids[2]->regTemp, node->regTemp), node->instructions);
+  addInstToList(jumpI(node->label), node->instructions); // || jump Lz
+  addInstToList(lbl(node->label), node->instructions);
+  //S.code = B.code || "Lx" || S1.code || i2i S1.reg S.reg || jump Lz || "Ly" || S2.code || i2i S2.reg S.reg || jump Lz || "Lz"
 
 }
 

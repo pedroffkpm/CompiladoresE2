@@ -14,6 +14,7 @@ typedef struct node{
 	Type varType;
 	int kidsNumber;
   int regTemp; //registrador temporário
+  int label;
 	struct node **kids; // lista de ponteiros
 
   int trueNmr;

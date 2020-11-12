@@ -344,10 +344,11 @@ expressao:
 								addChild($$, $1);
 								addChild($$, $3);
                 binOpCode($$); }
-	|parenteses_ou_operando operador_ternario expressao { $$ = $2;
+	|parenteses_ou_operando operador_ternario expressao { $$ = $2; //kids = [(0)true, (1)condition, (2)false]
 								addType($$, inferType($2->kids[0]->varType, $3->varType));
 								addChild($$, $1);
-								addChild($$, $3); }
+								addChild($$, $3);
+                ternOpCode($$); }
 	| parenteses_ou_operando { $$ = $1; };
 
 parenteses_ou_operando:
