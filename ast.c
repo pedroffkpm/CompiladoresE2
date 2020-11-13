@@ -20,7 +20,8 @@ void freeDanglingParser(Node* node);
 
 void checkTree(void* voidNode) {
 	Node* node = (Node*)voidNode;
-	int fullPass = 0;
+	//printf("Node line: %i\n", node->token->lineNumber);
+	int fullPass = 0;	
 	while(fullPass == 0) {
 		fullPass = removeNullNode(node);
 	}
@@ -28,7 +29,9 @@ void checkTree(void* voidNode) {
 }
 
 void changeTokenType(Node* node) {
+	//printf("\nChanged Type\n\n");
 	node->token->tokenType = REMOVE;
+	//printf("\nToken Type = %i\n\n", node->token->tokenType);
 	int i;
 	for(i = 0; i < node->kidsNumber; ++i) {
 		changeTokenType(node->kids[i]);
@@ -37,68 +40,100 @@ void changeTokenType(Node* node) {
 }
 
 Node* removeNullHead(Node* node) {
-	Node* nodeAux = NULL;
+	Node* nodeAux;
+	nodeAux = node;
+	for(int i = 0; i <node->kidsNumber; ++i) {
+		nodeAux->token = node->token;
+		nodeAux->kids = node->kids;
+	}	
 	if (node->token == NULL) {
 		nodeAux = node->kids[0];
-		nodeAux->token = node->kids[0]->token;
-		nodeAux->kids = node->kids[0]->kids;
+			for(int i = 0; i <node->kidsNumber; ++i) {
+				nodeAux->token = node->kids[i]->token;
+				nodeAux->kids = node->kids[i]->kids;
+			}
 		free(node->token);
 		free(node);
 	} else {
 		if (node->token->tokenType == REMOVE) {
 			nodeAux = node->kids[0];
-			nodeAux->token = node->kids[0]->token;
-			nodeAux->kids = node->kids[0]->kids;
+			for(int i = 0; i <node->kidsNumber; ++i) {
+				nodeAux->token = node->kids[i]->token;
+				nodeAux->kids = node->kids[i]->kids;
+			}
 			free(node->token);
-      //free instructions? mas se é NULL?
 			free(node);
 		}
 	}
 	return nodeAux;
 }
-int removeNullNode(Node* node) { //alterar pra instructions
-	int i,j;
+int removeNullNode(Node* node) {
+	int i = 0;
+	int j,nullC;
 	int nullNode = 1;
 	Node* nodeAux;
-	for(i = 1; i <= node->kidsNumber; ++i) {
-		if(node->kids[i-1]->token == NULL) {
+	int removedNodes = 0;
+	//printf("Kids number = %i\n", node->kidsNumber);
+	while(i < node->kidsNumber) {
+		//printf("\nIn while\n\n");
+		if(node->kids[i]->token == NULL) {
 			nullNode = 0;
-			if(node->kids[i-1]->kidsNumber == 0) {		
-				free(node->kids[i-1]->token);
-				free(node->kids[i-1]);
-				for(j = i; j <= node->kidsNumber; ++j) {
-					node->kids[j-1] = node->kids[j];
+			if(node->kids[i]->kidsNumber == 0) {
+				nodeAux = node->kids[i];	
+				removedNodes++;
+				for(j = i; j < node->kidsNumber-1; ++j) {
+					node->kids[j]->token = node->kids[j+1]->token;
+					node->kids[j] = node->kids[j+1];
 				}
-				node->kidsNumber = node->kidsNumber - 1;
-				node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
+				//free(node->kids[node->kidsNumber-1]->token);
+				//free(node->kids[node->kidsNumber-1]);
+				//node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
 			} else {
 				if(node->kids[i]->kidsNumber == 1) {
-					nodeAux = node->kids[i-1]->kids[0];		
-					free(node->kids[i-1]->token);
-					free(node->kids[i-1]);
-					node->kids[i-1] = nodeAux;
+					nodeAux = node->kids[i]->kids[0];		
+					//free(node->kids[i]->token);
+					//free(node->kids[i]);
+					node->kids[i] = nodeAux;
 				}
 			} 
-		}
-		if(node->kids[i-1]->token->tokenType == REMOVE) {
-			nullNode = 0;
-			if(node->kids[i-1]->kidsNumber == 0) {		
-				free(node->kids[i-1]->token);
-				free(node->kids[i-1]);
-				for(j = i; j <= node->kidsNumber; ++j) {
-					node->kids[j-1] = node->kids[j];
-				}
-				node->kidsNumber = node->kidsNumber - 1;
-				node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
-			} else {
-				if(node->kids[i]->kidsNumber == 1) {
-					nodeAux = node->kids[i-1]->kids[0];		
-					free(node->kids[i-1]->token);
-					free(node->kids[i-1]);
-					node->kids[i-1] = nodeAux;
+		} else {
+			//printf("\nCheck Remove node %s\n\n", node->kids[i]->token->value.str);
+			
+			if(node->kids[i]->token->tokenType == REMOVE) {
+				//printf("\nRemoved Node\n\n");
+				nullNode = 0;
+				if(node->kids[i]->kidsNumber == 0) {		
+					nodeAux = node->kids[i];
+					removedNodes++;
+					for(j = i; j < node->kidsNumber-1; ++j) {
+						node->kids[j]->token = node->kids[j+1]->token;
+						node->kids[j] = node->kids[j+1];
+					}
+					//free(node->kids[node->kidsNumber-1]->token);
+					//free(node->kids[node->kidsNumber-1]);
+					//node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
+				} else {
+					if(node->kids[i]->kidsNumber == 1) {
+						nodeAux = node->kids[i]->kids[0];		
+						//free(node->kids[i]->token);
+						//free(node->kids[i]);
+						node->kids[i] = nodeAux;
+					}		
 				}
 			}
-		}			
+		}
+		i++;			
+	}
+	if(removedNodes > 0) {
+		//printf("\nRemoved a Node\n\n");
+		//free(node->kids[node->kidsNumber-1]->token);
+		//free(node->kids[node->kidsNumber-1]);
+	} 
+	node->kidsNumber = node->kidsNumber - removedNodes;
+	node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
+	for(i = 0; i < node->kidsNumber; ++i) {
+		nullC = removeNullNode(node->kids[i]);
+		if (nullC == 0) nullNode = 0;
 	}
 	return nullNode;
 }
@@ -114,7 +149,7 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->varType = -1;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
-  node->instructions = createList();
+	node->kids[0] = NULL;
 	if(tokenType != NONE)
 		node->token->tokenType = tokenType;
 	return node;
@@ -125,7 +160,6 @@ Node* createDanglingNode(struct lexval* token) {
 	node->token = token;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
-  node->instructions = createList();
 	return node;
 }
 
@@ -246,7 +280,7 @@ void printTokenLabel(Node* node) {
 		case VEC_INDEX:
 			printf("[label=\"[]\"];\n");
 			break;
-		case F_CALL:
+		case FUNCTION:
 			printf("[label=\"call %s\"];\n", node->token->value.str);
 			break;
 		case TERN_OP:

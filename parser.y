@@ -4,7 +4,6 @@
 #include "lexVal.h"
 #include "lex.yy.h"	
 #include "validation.h"
-#include "table.h"
     
 #define YYERROR_VERBOSE 1
 
@@ -161,7 +160,7 @@ extern Node *danglingNodes;
 
 %%
 programa:
-	componentes { $$ = $1; arvore = removeNullHead($$); checkTree(arvore); parsingSucceded = TRUE; };
+	componentes { $$ = $1; $$ = removeNullHead($$); checkTree($$); arvore = $$; parsingSucceded = TRUE; };
 
 componentes: 
 	declaracao { $$ = $1; }
@@ -196,15 +195,10 @@ ids: id_global ',' ids { $$ = $1;
 id_global: TK_IDENTIFICADOR {$$ = createId($1, NULL, NULL);}
          | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createId($1, $3, NULL);};
 
-funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' abreEscopo bloco { $$ = createNode($3, NONE); //reservada
+funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = createNode($3, NONE); //reservada
 								addType($$, $2);
-								addChild($$, $8); 
-								addFuncToTable($3, $2, $5);
-
-                popTable();
-                } ;
-
-abreEscopo: %empty { pushTable(); };
+								addChild($$, $7); 
+								addFuncToTable($3, $2, $5);} ;
 
 params_list_global: global_args_list { $$ = $1; }
                   | %empty { $$ = createParam(NULL, VAR); } ;
@@ -229,7 +223,7 @@ comando: var_local { $$ = $1; } //DONE
        | comando_es { $$ = $1; } //DONE?
        | func_call { $$ = $1; validateFunction($$);}
        | shift { $$ = $1; validateShift($$); }
-       | retorno { $$ = $1; validateReturn($$); }//TODO
+       | retorno { $$ = $1;}//TODO
        | bloco { $$ = $1; };//TODO push/pop
 
 var_local: static_opcional const_opcional tipo variavel { $$ = $4;
@@ -256,8 +250,7 @@ id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);}
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
 								addChild($$, $1);
-								addChild($$, $3);
-                assignCode($$); } ;
+								addChild($$, $3);} ;
 
 fluxo: if {$$ = $1;}
      | for {$$ = $1;}
@@ -299,25 +292,22 @@ id_or_exp_list: expressao ',' id_or_exp_list { $$ = $1;
 								addChild($$, $3); }
 	          | expressao { $$ = $1;} ;
 
-shift: TK_IDENTIFICADOR TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
-								Node *node1 = createNode($1, NONE);
-								addType(node1, INT_TYPE);
-								addChild($$, node1);
+shift: id_expr TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
+								addChild($$, $1);
 								Node *node2 = createNode($3, NONE);
 								addType(node2, INT_TYPE);
 								addChild($$, node2); }
-     | TK_IDENTIFICADOR TK_OC_SL TK_LIT_INT { $$ = createNode($2, NONE);
-								Node *node1 = createNode($1, NONE);
-								addType(node1, INT_TYPE);
-								addChild($$, node1);
+     | id_expr TK_OC_SL TK_LIT_INT { $$ = createNode($2, NONE);
+								addChild($$, $1);
 								Node *node2 = createNode($3, NONE);
 								addType(node2, INT_TYPE);
 								addChild($$, node2); };
 
 retorno: TK_PR_RETURN expressao { $$ = createNode($1, NONE);
 								addType($$, $2->varType); 
-								addChild($$, $2);}
-	|TK_PR_RETURN { $$ = createNode($1, NONE); }
+								addChild($$, $2);
+								validateReturn($$); }
+	|TK_PR_RETURN { $$ = createNode($1, NONE); validateReturn($$);  }
        	| TK_PR_BREAK { $$ = createNode($1, NONE); }
        	| TK_PR_CONTINUE { $$ = createNode($1, NONE); } ;
 
@@ -384,6 +374,8 @@ operador_binario:
 	| '|' { $$ = createNode($1, NONE); }
 	| '&' { $$ = createNode($1, NONE); } 
 	| '^' { $$ = createNode($1, NONE); } 
+	| '>' { $$ = createNode($1, NONE); }  
+	| '<' { $$ = createNode($1, NONE); }  
 	| TK_OC_LE { $$ = createNode($1, NONE); }
 	| TK_OC_GE { $$ = createNode($1, NONE); } 
 	| TK_OC_EQ { $$ = createNode($1, NONE); }

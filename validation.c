@@ -235,6 +235,8 @@ void validateVector(Node* node) {
 }
 
 void validateFunctionArgs(Node *node, Param *param) {
+	Symbol* s;
+	Type t;
 	if (param == NULL){
 		if (node == NULL) {
 			return;
@@ -246,10 +248,16 @@ void validateFunctionArgs(Node *node, Param *param) {
 		printSimpleError(ERR_MISSING_ARGS, 0, param->name);
 		exit(ERR_MISSING_ARGS);
 	}
-	if(param->type == node->varType) {
+	if(node->token->tokenType == IDS) {
+		s = getSymbol(node->token->value.str);
+		t = s->type;
+	} else {
+		t = node->varType;
+	}
+	if(param->type == t) {
 		validateFunctionArgs(node->kids[0], param->next);
 	} else {
-		printTypeError(ERR_WRONG_TYPE_ARGS, node->token->lineNumber, param->type, node->varType, node->token->value.str);
+		printTypeError(ERR_WRONG_TYPE_ARGS, node->token->lineNumber, param->type, t, node->token->value.str);
 		exit(ERR_WRONG_TYPE_ARGS);
 	}
 	return;
@@ -322,17 +330,18 @@ void isDeclaredRec(Node* node) {
 
 void validateInput(Node *node) {
 	Symbol* s = getSymbol(node->kids[0]->token->value.str);
-	if(s->type == INT || s->type == FLOAT) {
+	if(s->type == INT_TYPE || s->type == FLOAT_TYPE) {
 		return;
-	}
-	printTypeError(ERR_WRONG_PAR_INPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);
-	exit(ERR_WRONG_PAR_INPUT);	
+	} else {
+		printTypeError(ERR_WRONG_PAR_INPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);
+		exit(ERR_WRONG_PAR_INPUT);
+	}	
 	return;
 }
 
 void validateOutput(Node *node) {
 	Symbol* s = getSymbol(node->kids[0]->token->value.str);
-	if(s->type == INT || s->type == FLOAT) {
+	if(s->type == INT_TYPE || s->type == FLOAT_TYPE) {
 		return;
 	}
 	printTypeError(ERR_WRONG_PAR_OUTPUT, node->token->lineNumber, INT_TYPE, s->type, node->kids[0]->token->value.str);
@@ -341,12 +350,19 @@ void validateOutput(Node *node) {
 }
 
 void validateReturn(Node *node) {
-	Symbol* s = getSymbol(node->kids[0]->token->value.str);
-	if(s->type == scopeType) {
+	Type t;
+	Symbol* s;
+	if (node->kids[0]->token->tokenType == IDS) {
+		s = getSymbol(node->kids[0]->token->value.str);
+		t = s->type;
+	} else {
+		t = node->kids[0]->varType;
+	}
+	if(t == scopeType) {
 		popTable();
 		return;
 	}
-	printTypeError(ERR_WRONG_PAR_RETURN, node->token->lineNumber, s->type, node->varType, node->token->value.str);
+	printTypeError(ERR_WRONG_PAR_RETURN, node->token->lineNumber, t, node->varType, node->token->value.str);
 	exit(ERR_WRONG_PAR_RETURN);	
 }
 
@@ -362,8 +378,16 @@ void validateAttribution(Node *node) {
 	Symbol* s;	
 	if(node->kids[0]->kidsNumber > 0) {
 		s = getSymbol(node->kids[0]->kids[0]->token->value.str);
+		if (s == NULL) {
+			printSimpleError(ERR_UNDECLARED, node->kids[0]->kids[0]->token->lineNumber, node->kids[0]->kids[0]->token->value.str);
+    			exit(ERR_UNDECLARED);
+		}
 		} else {		
 	 	s = getSymbol(node->kids[0]->token->value.str);
+		if (s == NULL) {
+			printSimpleError(ERR_UNDECLARED, node->kids[0]->token->lineNumber, node->kids[0]->token->value.str);
+    			exit(ERR_UNDECLARED);
+		}
 	}
 	if(s->type == node->kids[1]->varType) {
 		if(s->type == STRING_TYPE) {

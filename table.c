@@ -76,8 +76,6 @@ SymbolTable *createTable() {
 
     new->elements = (Symbol **)malloc(sizeof(Symbol *) * HASH_SIZE);
 
-    new->deslocamento = 0;
-
     for (int i = 0; i < HASH_SIZE; i++)
     {
         new->elements[i] = NULL;
@@ -210,9 +208,6 @@ void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexv
     currentScope->elements[index]->valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
     memcpy(currentScope->elements[index]->valor_lexico, valor_lexico, sizeof(struct lexval));
 
-    currentScope->elements[index]->offset = currentScope->deslocamento;
-    currentScope->deslocamento += currentScope->elements[index]->size;
-
 }
 
 Symbol* getSymbol(char *key) {
@@ -273,56 +268,6 @@ Symbol* getSymbolOnTable(char *key) {
 	return symbol;
 }
 
-bool isSymbolInTable(Symbol* symbol, SymbolTable* table) {
-
-    int index = hashFunction(symbol->key);
-
-    while (table->elements[index] != NULL) {
-        if (strncmp(table->elements[index]->key, symbol->key, strlen(symbol->key)) == 0) {
-            return true;
-            break;
-        }
-        else {
-            ++index;
-            index %= HASH_SIZE;
-        }
-    }
-    return false;
-}
-
-int getScopeForKey(char *key) {
-  Symbol *s = getSymbol(key);
-
-  if (s == NULL) {
-    return -2; // symbol isnt in any table
-  }
-
-  SymbolTable *table = currentScope;
-
-  do {
-    if (isSymbolInTable(s, table)) {
-      return getScope(table);
-    }
-    else {
-      table = table->nextTable;
-    }
-  } while (table != NULL);
-
-  return -2; //symbol isnt in any table
-}
-
-int getScope(SymbolTable* table) {
-  if(table == NULL) {
-    return -1; //em tese nunca acontece
-  }
-
-  if (table->nextTable == NULL)
-  {
-    return 0;
-  } else {
-    return 1 + getScope(table->nextTable);
-  }
-}
 
 int inferType(Type left, Type right) {
     if(left == STRING_TYPE || left == CHAR_TYPE || right == STRING_TYPE || right == CHAR_TYPE) {
