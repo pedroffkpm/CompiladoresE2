@@ -4,6 +4,8 @@
 #include "lexVal.h"
 #include "lex.yy.h"	
 #include "validation.h"
+#include "table.h"
+#include "iloc.h"
     
 #define YYERROR_VERBOSE 1
 
@@ -195,10 +197,15 @@ ids: id_global ',' ids { $$ = $1;
 id_global: TK_IDENTIFICADOR {$$ = createId($1, NULL, NULL);}
          | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createId($1, $3, NULL);};
 
-funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' bloco { $$ = createNode($3, NONE); //reservada
+funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' abreEscopo bloco { $$ = createNode($3, NONE); //reservada
 								addType($$, $2);
-								addChild($$, $7); 
-								addFuncToTable($3, $2, $5);} ;
+								addChild($$, $8); 
+								addFuncToTable($3, $2, $5);
+
+                popTable();
+                } ;
+
+abreEscopo: %empty { pushTable(); };
 
 params_list_global: global_args_list { $$ = $1; }
                   | %empty { $$ = createParam(NULL, VAR); } ;
@@ -250,7 +257,8 @@ id_expr: TK_IDENTIFICADOR { $$ = createNode($1, NONE);}
 
 atrib: id_expr '=' expressao { $$ = createNode($2, NONE);
 								addChild($$, $1);
-								addChild($$, $3);} ;
+								addChild($$, $3);
+                assignCode($$); } ;
 
 fluxo: if {$$ = $1;}
      | for {$$ = $1;}
@@ -259,7 +267,8 @@ fluxo: if {$$ = $1;}
 if: TK_PR_IF '(' expressao ')' bloco else_opcional { $$ = createNode($1, NONE);
 								addChild($$, $3);
 								addChild($$, $5);
-								addChild($$, $6);};
+								addChild($$, $6);
+                ifElseCode($$); };
 else_opcional: TK_PR_ELSE bloco { $$ = createNode($1, NONE);
 								addChild($$, $2);}
              | %empty{ $$ = createNode(NULL, NONE);};
@@ -268,11 +277,13 @@ for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco { $$ = createNode($1,
 								addChild($$, $3);
 								addChild($$, $5);
 								addChild($$, $7);
-								addChild($$, $9);};
+								addChild($$, $9);
+                forCode($$); };
 
 while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = createNode($1, NONE);
 								addChild($$, $3);
-								addChild($$, $6);};
+								addChild($$, $6);
+                whileCode($$); };
 
 comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								Node *node = createNode($2, NONE);
@@ -331,11 +342,13 @@ expressao:
 	parenteses_ou_operando operador_binario expressao { $$ = $2;
 								addType($$, inferType($1->varType, $3->varType));
 								addChild($$, $1);
-								addChild($$, $3); }
-	|parenteses_ou_operando operador_ternario expressao { $$ = $2;
+								addChild($$, $3);
+                binOpCode($$); }
+	|parenteses_ou_operando operador_ternario expressao { $$ = $2; //kids = [(0)true, (1)condition, (2)false]
 								addType($$, inferType($2->kids[0]->varType, $3->varType));
 								addChild($$, $1);
-								addChild($$, $3); }
+								addChild($$, $3);
+                ternOpCode($$); }
 	| parenteses_ou_operando { $$ = $1; };
 
 parenteses_ou_operando:
@@ -346,9 +359,10 @@ parenteses_ou_operando:
    	| func_call { $$ = $1; } ;
 
 operandos:
-	id_expr { $$ = $1;}
+	id_expr { $$ = $1; loadVarToRegCode($$); }
 	| TK_LIT_INT { $$ = createNode($1, NONE);
-								addType($$, INT_TYPE); }
+								addType($$, INT_TYPE);
+                intCode($$); }
        	| TK_LIT_FLOAT { $$ = createNode($1, NONE);
 								addType($$, FLOAT_TYPE); }
        	| TK_LIT_FALSE { $$ = createNode($1, NONE);
@@ -380,7 +394,7 @@ operador_binario:
 	| TK_OC_GE { $$ = createNode($1, NONE); } 
 	| TK_OC_EQ { $$ = createNode($1, NONE); }
 	| TK_OC_NE { $$ = createNode($1, NONE); } 
-	| TK_OC_AND { $$ = createNode($1, NONE); } 
+	| TK_OC_AND { $$ = createNode($1, NONE);} 
 	| TK_OC_OR { $$ = createNode($1, NONE); };
 
 operador_ternario:

@@ -53,11 +53,14 @@ typedef struct Symbol {
     int n_params;
     Param* params;
     struct lexval* valor_lexico;
+
+    int offset;
 } Symbol;
 
 typedef struct SymbolTable {
     Symbol** elements;
     struct SymbolTable* nextTable;
+    int deslocamento;
 
 } SymbolTable;
 
@@ -80,3 +83,9 @@ int inferSizeForType(Type type, int elem_number);
 int inferType(Type left, Type right);
 
 int convertType(Type from, Type to);
+
+int getScopeForKey(char *key);
+
+int getScope(SymbolTable* table);
+
+#endif

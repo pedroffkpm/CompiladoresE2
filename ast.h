@@ -3,12 +3,24 @@
 #include <stdbool.h>
 
 #include "lexVal.h"
+#include "instructions.h"
 
 typedef struct node{
 	struct lexval* token;
 	Type varType;
 	int kidsNumber;
+  int regTemp; //registrador temporário
+  int label;
 	struct node **kids; // lista de ponteiros
+
+  int trueNmr;
+  int* tl;
+
+  int falseNmr;
+  int* fl;
+
+  InstructionList* instructions;
+
 } Node;
 
 void checkTree(void* voidNode);
@@ -49,3 +61,12 @@ void contaNodosNaRaiz(Node *n);
 
 void changeTokenType(Node* node);
 
+void addTrueList(Node* node, int label);
+
+void concatTrueL(Node* node1, Node* node2);
+
+void concatFalseL(Node* node1, Node* node2);
+
+void addFalseList(Node* node, int label);
+
+#endif

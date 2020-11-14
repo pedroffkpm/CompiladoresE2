@@ -20,8 +20,7 @@ void freeDanglingParser(Node* node);
 
 void checkTree(void* voidNode) {
 	Node* node = (Node*)voidNode;
-	//printf("Node line: %i\n", node->token->lineNumber);
-	int fullPass = 0;	
+	int fullPass = 0;
 	while(fullPass == 0) {
 		fullPass = removeNullNode(node);
 	}
@@ -29,9 +28,7 @@ void checkTree(void* voidNode) {
 }
 
 void changeTokenType(Node* node) {
-	//printf("\nChanged Type\n\n");
 	node->token->tokenType = REMOVE;
-	//printf("\nToken Type = %i\n\n", node->token->tokenType);
 	int i;
 	for(i = 0; i < node->kidsNumber; ++i) {
 		changeTokenType(node->kids[i]);
@@ -53,6 +50,9 @@ Node* removeNullHead(Node* node) {
 				nodeAux->kids = node->kids[i]->kids;
 			}
 		free(node->token);
+    free(node->tl);
+    free(node->fl);
+    freeList(node->instructions);
 		free(node);
 	} else {
 		if (node->token->tokenType == REMOVE) {
@@ -62,6 +62,10 @@ Node* removeNullHead(Node* node) {
 				nodeAux->kids = node->kids[i]->kids;
 			}
 			free(node->token);
+      free(node->tl);
+      free(node->fl);
+      freeList(node->instructions);
+      //free instructions? mas se é NULL?
 			free(node);
 		}
 	}
@@ -149,7 +153,15 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->varType = -1;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
-	node->kids[0] = NULL;
+  node->instructions = createList();
+  node->regTemp = -5; //ILOC.H -> -4 a -1 são reservados (RFP, RSP, RBSS, RPC)
+  node->label = -1; // getLabel() gera a partir de 0
+  node->trueNmr = 0;
+  node->tl = NULL;
+
+  node->falseNmr = 0;
+  node->fl = NULL;
+
 	if(tokenType != NONE)
 		node->token->tokenType = tokenType;
 	return node;
@@ -160,6 +172,15 @@ Node* createDanglingNode(struct lexval* token) {
 	node->token = token;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
+  node->instructions = createList();
+  node->regTemp = -5;
+  node->label = -1;
+
+  node->trueNmr = 0;
+  node->tl = NULL;
+  node->falseNmr = 0;
+  node->fl = NULL;
+
 	return node;
 }
 
@@ -207,6 +228,9 @@ void freeDanglingParser(Node* node) {
 				free(node->token->value.str);			
 			}
 			free(node->token);
+      free(node->tl);
+      free(node->fl);
+      freeList(node->instructions);
 		}
 		free(node);
 	}
@@ -304,6 +328,9 @@ void freeDanglingScanner(Node* node) {
 					free(node->token->value.str);
 				}
 				free(node->token);
+        free(node->tl);
+        free(node->fl);
+        freeList(node->instructions);
 			}
 		}
 		free(node);
@@ -370,9 +397,44 @@ void libera(void* voidNode) {
 				free(node->token->value.str);		
 		}
 		free(node->token);
+    free(node->tl);
+    free(node->fl);
+    freeList(node->instructions);
 		free(node);	
 	}
 }
 
+void addTrueList(Node* node, int label) {
+  node->trueNmr++;
 
+  if(node->tl == NULL) {
+    node->tl = (int*) malloc(sizeof(int));
+  } else { //append no final da lista
+    node->tl = (int*) realloc(node->tl, sizeof(int) * node->trueNmr);
+  }
+  node->tl[node->trueNmr-1] = label;
+}
+
+void addFalseList(Node* node, int label) {
+  node->falseNmr++;
+
+  if(node->fl == NULL) {
+    node->fl = (int*) malloc(sizeof(int));
+  } else { //append no final da lista
+    node->fl = (int*) realloc(node->fl, sizeof(int) * node->falseNmr);
+  }
+  node->fl[node->falseNmr-1] = label;
+}
+
+void concatTrueL(Node* node1, Node* node2) {
+  for(int i = 0; i < node2->trueNmr; i++) {
+    addTrueList(node1, node2->tl[i]);
+  }
+}
+
+void concatFalseL(Node* node1, Node* node2) {
+  for(int i = 0; i < node2->falseNmr; i++) {
+    addFalseList(node1, node2->fl[i]);
+  }
+}
 
