@@ -222,6 +222,86 @@ void ternOpCode(Node* node) { // (kids[1]/condition) ? (kids[0]/if) : (kids[2]/e
 
 }
 
+void ifElseCode(Node* node) { //kids[0] = cond ; kids[1] = then ; kids[2] = else(pode ser NULL)
+
+  int x = getLabel();
+  int y = getLabel();
+
+  remendaTrue(node->kids[0], x);
+  remendaFalse(node->kids[0], y);
+  // node->label = getLabel();
+
+  node->instructions = concatLists(node->kids[0]->instructions, node->instructions); //S.code = B.code
+  addInstToList(lbl(x), node->instructions); // S.code = B.code || "Lx: "
+  node->instructions = concatLists(node->instructions, node->kids[1]->instructions); // B.code || Lx || S1.code
+
+  if(node->kidsNumber == 4) { //TEM ELSE
+  node->label = getLabel();
+  addInstToList(jumpI(node->label), node->instructions); //B.code || Lx || S1.code || jump Lz
+  addInstToList(lbl(y), node->instructions); // B.code || Lx || S1.code || jump Lz || Ly
+  node->instructions = concatLists(node->instructions, node->kids[2]->instructions); // B.code || Lx || S1.code || jump Lz || Ly || S2.code
+  addInstToList(jumpI(node->label), node->instructions); // jump Lz
+  addInstToList(lbl(node->label), node->instructions);
+  //B.code || Lx || S1.code || jump z || Ly || S2.code || jump z || Lz || <prox. instrucoes>
+  } else {
+    //se n tem else, pulou pro label de FALSE
+    addInstToList(lbl(y), node->instructions); // B.code || LX || S1.code || Ly
+  }
+  //acabaria aqui
+  //OU Lz vai ser o prox. nodo; OU Ly vai
+  node->instructions = concatLists(node->instructions, node->kids[node->kidsNumber-1]->instructions);
+  // sem ELSE:
+    // B.code || Lx || S1.code || Ly || <prox.>
+  // com ELSE:
+    // B.code || Lx || S1.code || jump z || Ly || S2.code || jump z || Lz || <prox.>
+}
+
+void whileCode(Node* node) { //kids[0] = cond ; kids[1] = bloco
+  node->label = getLabel();
+
+  int x = getLabel();
+  int y = getLabel();
+
+  remendaTrue(node->kids[0], x);
+  remendaFalse(node->kids[0], y);
+
+  addInstToList(lbl(node->label), node->instructions); // S.code = "Lz"
+  node->instructions = concatLists(node->kids[0]->instructions, node->instructions); // S.code = Lz || B.code
+  addInstToList(lbl(x), node->instructions); // Lz || B.code || Lx
+  node->instructions = concatLists(node->instructions, node->kids[1]->instructions); // Lz || B.code || Lx || S1.code
+  addInstToList(jumpI(node->label), node->instructions); // Lz || B.code || Lx || S1.code || jump z
+  addInstToList(lbl(y), node->instructions); // Lz || B.code || Lx || S1.code || jump z || Ly
+
+}
+
+void forCode(Node* node) {
+  //for ( kids[0]; kids[1]; kids[2]) kids[3]
+  //[int i = 0]; teste: [i < 5; cbr true false]; true: [printf("%d", i); i++; jump teste]; false: [nop...]
+
+  node->instructions = concatLists(node->kids[0]->instructions, node->instructions); // S.code = S1.code
+
+  node->label = getLabel();
+  int x = getLabel();
+  int y = getLabel();
+
+  remendaTrue(node->kids[1], x); //remenda B
+  remendaFalse(node->kids[1], y); //remenda B
+
+  addInstToList(lbl(node->label), node->instructions); // S1.code || Lz: ||
+  node->instructions = concatLists(node->instructions, node->kids[1]->instructions); //S1.code || Lz (teste) || B.code
+
+  addInstToList(lbl(x), node->instructions); // S1.code || L teste || B.code || L true
+  node->instructions = concatLists(node->instructions, node->kids[3]->instructions); //S1 || teste || B || true || S3
+  node->instructions = concatLists(node->instructions, node->kids[2]->instructions); //S1 || teste || B || true || S3 || S2
+  addInstToList(jumpI(node->label), node->instructions);// S1 || Lz || B || Lx || S3 || S2 || jump z
+
+  addInstToList(lbl(y), node->instructions);
+  //S1 || Lz || B (cbr Lx Ly) || Lx: || S3 || S2 || jump z || Ly: 
+
+}
+
+
+
 //###########################
 
 char* special_register(Register nmr) {
@@ -257,7 +337,7 @@ void printInstruction(Instruction *instruction)
   switch (instruction->op_code)
   {
   case LBL:
-    printf("L%d \n", instruction->arg1);
+    printf("L%d: nop\n", instruction->arg1);
     break;
   case NOP:
     printf("nop \n");

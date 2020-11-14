@@ -26,6 +26,12 @@ void remendaTrue(Node* node, int newLabel);
 
 void remendaFalse(Node* node, int newLabel);
 
+void ifElseCode(Node* node);
+
+void whileCode(Node* node);
+
+void forCode(Node* node);
+
 void relopCode(Node* node, OpCode op);
 
 void assignCode(Node* node);

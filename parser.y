@@ -267,7 +267,8 @@ fluxo: if {$$ = $1;}
 if: TK_PR_IF '(' expressao ')' bloco else_opcional { $$ = createNode($1, NONE);
 								addChild($$, $3);
 								addChild($$, $5);
-								addChild($$, $6);};
+								addChild($$, $6);
+                ifElseCode($$); };
 else_opcional: TK_PR_ELSE bloco { $$ = createNode($1, NONE);
 								addChild($$, $2);}
              | %empty{ $$ = createNode(NULL, NONE);};
@@ -276,11 +277,13 @@ for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco { $$ = createNode($1,
 								addChild($$, $3);
 								addChild($$, $5);
 								addChild($$, $7);
-								addChild($$, $9);};
+								addChild($$, $9);
+                forCode($$); };
 
 while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = createNode($1, NONE);
 								addChild($$, $3);
-								addChild($$, $6);};
+								addChild($$, $6);
+                whileCode($$); };
 
 comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								Node *node = createNode($2, NONE);
