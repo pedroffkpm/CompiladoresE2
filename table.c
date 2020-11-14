@@ -124,19 +124,20 @@ void popTable() {
     if (currentScope->elements != NULL) {
         for (int i = 0; i < HASH_SIZE; i++) {
             Symbol *elm = currentScope->elements[i];
-            for (int j = 0; j < elm->n_params; j++) {
-                freeParam(elm->params);
-            }
+			if (elm != NULL) {
+            	for (int j = 0; j < elm->n_params; j++) {
+                	freeParam(elm->params);
+            	}
 
-            free(elm->key);
-            elm->key = NULL;
+            	free(elm->key);
+            	elm->key = NULL;
 
-            free(elm->valor_lexico);
-            elm->valor_lexico = NULL;
+	            free(elm->valor_lexico);
+	            elm->valor_lexico = NULL;
 
-            free(elm);
-            elm = NULL;
-
+	            free(elm);
+	            elm = NULL;
+			}
             currentScope->elements[i] = NULL;
         }
 
@@ -184,6 +185,12 @@ char* makeKey(int keysize, Nature nature, struct lexval *valor_lexico) {
     return key;
 }
 
+int getParamNumber(Param* params) {
+	if(params == NULL)
+		return 0;
+	return 1 + getParamNumber(params->next);
+}
+
 void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexval *valor_lexico) {
 	if(scopeDefined == FALSE)
 		defineScope();
@@ -204,6 +211,7 @@ void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexv
     currentScope->elements[index]->line = valor_lexico->lineNumber;
     currentScope->elements[index]->nature = nature;
     currentScope->elements[index]->params = params;
+	currentScope->elements[index]->n_params = getParamNumber(params);
     currentScope->elements[index]->type = type;
     currentScope->elements[index]->size = inferSizeForType(type, vecSize);
     currentScope->elements[index]->valor_lexico = (struct lexval*) malloc(sizeof(struct lexval));
