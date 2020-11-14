@@ -153,6 +153,7 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->varType = -1;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
+	node->kids[0] = NULL;
   node->instructions = createList();
   node->regTemp = -5; //ILOC.H -> -4 a -1 são reservados (RFP, RSP, RBSS, RPC)
   node->label = -1; // getLabel() gera a partir de 0

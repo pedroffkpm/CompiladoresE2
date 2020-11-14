@@ -1,3 +1,5 @@
+#ifndef AST_H
+#define AST_H 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

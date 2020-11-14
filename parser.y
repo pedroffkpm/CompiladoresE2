@@ -4,8 +4,8 @@
 #include "lexVal.h"
 #include "lex.yy.h"	
 #include "validation.h"
-#include "table.h"
 #include "iloc.h"
+
     
 #define YYERROR_VERBOSE 1
 
@@ -32,6 +32,7 @@ extern Node *danglingNodes;
 	struct node* ast;
 	Type type;
 	struct idList* idList;
+	struct Param* param;
 }
 
 %define parse.error verbose
@@ -103,9 +104,9 @@ extern Node *danglingNodes;
 %type <ast> funcao_global
 //header  não deveria ser nodo, como fazer?
 // %type<node> header_func_global
-%type <ast> params_list_global
-%type <ast> global_args_list
-%type <ast> global_func_arg
+%type <param> params_list_global
+%type <param> global_args_list
+%type <param> global_func_arg
 %type <ast> bloco
 %type <ast> comando_list
 %type <ast> comando
@@ -195,7 +196,7 @@ ids: id_global ',' ids { $$ = $1;
    | id_global { $$ = $1;} ;
 
 id_global: TK_IDENTIFICADOR {$$ = createId($1, NULL, NULL);}
-         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createId($1, $3, NULL);};
+         | TK_IDENTIFICADOR '[' TK_LIT_INT ']' {$$ = createId($1, $3, NULL); struct lexval* i = $2;};
 
 funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' abreEscopo bloco { $$ = createNode($3, NONE); //reservada
 								addType($$, $2);
