@@ -163,7 +163,8 @@ extern Node *danglingNodes;
 
 %%
 programa:
-	componentes { $$ = $1; $$ = removeNullHead($$); checkTree($$); arvore = $$; parsingSucceded = TRUE; };
+	componentes { $$ = $1; $$ = removeNullHead($$); checkTree($$); arvore = $$; parsingSucceded = TRUE; deleteTables(); }
+	| %empty { $$ = createNode(NULL,NONE);};
 
 componentes: 
 	declaracao { $$ = $1; }

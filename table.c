@@ -55,11 +55,9 @@ int inferSizeForType(Type type, int elem_number) {
 }
 
 Param* createParam(struct lexval* token, Type type) {
+	if (token == NULL)
+		return NULL;
 	Param *new = malloc(sizeof(Param));
-	if (token == NULL) {
-		new = NULL;
-		return new;
-	}
 	new->type = type;
 	new->name = token->value.str;
 	new->_const = FALSE;
