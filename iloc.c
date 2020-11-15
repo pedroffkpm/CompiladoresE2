@@ -300,6 +300,31 @@ void forCode(Node* node) {
 
 }
 
+void varLocalCode(Node* node) {
+
+  addInstToList(addI(RSP, inferSizeForType(node->varType, 1), RSP), node->instructions);
+}
+
+void blockCode(Node* node) {
+  for (int i = 0; i < node->kidsNumber-2; i++) //ultimo é NULL
+  {
+    node->instructions = concatLists(node->instructions, node->kids[i]->instructions);
+  }
+}
+
+void iloc_init(Node* node) {
+
+  InstructionList* list = createList();
+  // addInstToList(loadI(1024, RFP), list);
+  // addInstToList(loadI(1024, RSP), list);
+  // addInstToList(loadI(0, RBSS), list);
+  addInstToList(jumpI(0), list); //main é L0
+
+  node->instructions = concatLists(list, node->instructions); //bota essas insts no inicio do programa
+  freeList(list);
+
+  addInstToList(halt(), node->instructions); //adiciona halt no final
+}
 
 
 //###########################
@@ -346,7 +371,15 @@ void printInstruction(Instruction *instruction)
     printf("add r%d, r%d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
     break;
   case ADDI:
-    printf("addI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    if (instruction->arg1 < 0 && instruction->arg3 < 0) {
+      printf("addI %s, %d => %s\n", special_register(instruction->arg1), instruction->arg2, special_register(instruction->arg3));
+    } else if (instruction->arg1 < 0) {
+      printf("addI %s, %d => r%d\n", special_register(instruction->arg1), instruction->arg2, instruction->arg3);
+    } else if (instruction->arg3 < 0) {
+      printf("addI r%d, %d => %s\n", instruction->arg1, instruction->arg2, special_register(instruction->arg3));
+    } else {
+      printf("addI r%d, %d => r%d\n", instruction->arg1, instruction->arg2, instruction->arg3);
+    }
     break;
   case SUB:
     printf("sub r%d, r%d => r%d\n",  instruction->arg1, instruction->arg2, instruction->arg3);

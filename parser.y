@@ -201,7 +201,7 @@ funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' 
 								addType($$, $2);
 								addChild($$, $8); 
 								addFuncToTable($3, $2, $5);
-
+								//geraCODIGO
                 popTable();
                 } ;
 
@@ -216,7 +216,7 @@ global_args_list: global_func_arg ',' global_args_list { $$ = $1;
 
 global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createParam($3, $2); } ; //reservada
 
-bloco: '{' comando_list '}' { $$ = $2; }
+bloco: '{' comando_list '}' { $$ = $2; blockCode($$); }
 				 
 	//|comando { $$ = $1; };
 
@@ -235,7 +235,9 @@ comando: var_local { $$ = $1; } //DONE
 
 var_local: static_opcional const_opcional tipo variavel { $$ = $4;
 								addType($$, $3); 
-								addNodeToTable($4, $3, VAR, 1);} ;
+								addNodeToTable($4, $3, VAR, 1);
+								varLocalCode($$);
+								} ;
 
 variavel: init_opcional ',' variavel { $$ = $1;
 								addChild($$, $3); }
@@ -294,9 +296,9 @@ comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								validateOutput($$);};
 
 func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = createNode($1, FUNCTION);
-								addChild($$, $3);};
+								addChild($$, $3); //geraCODIGO};
 
-args_list: id_or_exp_list { $$ = $1;}
+args_list: id_or_exp_list { $$ = $1; callArgListCode($$); }
          | %empty { $$ = createNode(NULL, NONE);} ;
 
 id_or_exp_list: expressao ',' id_or_exp_list { $$ = $1;
