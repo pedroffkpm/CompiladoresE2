@@ -14,7 +14,7 @@ endif
 #parser.tab.c => output bison
 all: lex.yy.o
 
-	$(CC) $(CCFLAGS) main.c ast.c table.c validation.c iloc.c instructions.c lex.yy.o parser.tab.o -$(LFL) -o etapa4
+	$(CC) $(CCFLAGS) main.c ast.c table.c validation.c iloc.c instructions.c lex.yy.o parser.tab.o -$(LFL) -o etapa5
 
 lex.yy.o: parser.y scanner.l
 	bison -d parser.y --verbose
@@ -22,6 +22,6 @@ lex.yy.o: parser.y scanner.l
 	$(CC) -c lex.yy.c parser.tab.c
 
 clean:
-	rm -rf etapa4 lex.yy.* parser.tab.* *.o parser.output *.dSYM
+	rm -rf etapa5 lex.yy.* parser.tab.* *.o parser.output *.dSYM
 	
 #arquivo dSYM aparece no macOS

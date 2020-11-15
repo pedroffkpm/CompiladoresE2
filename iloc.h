@@ -32,9 +32,17 @@ void whileCode(Node* node);
 
 void forCode(Node* node);
 
+void listCode(Node* node);
+
+void blockCode(Node* node);
+
 void relopCode(Node* node, OpCode op);
 
 void assignCode(Node* node);
+
+void iloc_init(Node* node);
+
+void varLocalCode(Node* node);
 
 //print
 

@@ -1,7 +1,7 @@
 #include "instructions.h"
 
 int register_counter = 0;
-int label_counter = 0;
+int label_counter = 1; //começa em 1 pq 0 é reservado pra main()
 
 //################
 

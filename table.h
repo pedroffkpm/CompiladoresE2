@@ -57,6 +57,7 @@ typedef struct Symbol {
     struct lexval* valor_lexico;
 
     int offset;
+    int label;
 } Symbol;
 
 typedef struct SymbolTable {
