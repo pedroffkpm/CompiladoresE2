@@ -111,14 +111,13 @@ void pushTable() {
 
 void freeParam(Param *parametro) {
     if (parametro == NULL) {
+		free(parametro);
         return;
     }
 	if (parametro->next != NULL) {
 		freeParam(parametro->next);
 	}
-    if (parametro->name != NULL) {
-        free(parametro->name);
-    }
+	free(parametro->name);
 
     free(parametro);
 }
@@ -144,6 +143,7 @@ void popTable() {
             currentScope->elements[i] = NULL;
         }
 		aux = currentScope;
+		free(currentScope->elements);
         currentScope = currentScope->nextTable;
 		free(aux);
     }
