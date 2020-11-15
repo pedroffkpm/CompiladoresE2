@@ -203,7 +203,6 @@ funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' 
 								addChild($$, $8); 
 								addFuncToTable($3, $2, $5);
 
-                popTable();
                 } ;
 
 abreEscopo: %empty { pushTable(); };
@@ -217,7 +216,8 @@ global_args_list: global_func_arg ',' global_args_list { $$ = $1;
 
 global_func_arg: const_opcional tipo TK_IDENTIFICADOR { $$ = createParam($3, $2); } ; //reservada
 
-bloco: '{' comando_list '}' { $$ = $2; }
+bloco: '{' comando_list '}' { $$ = $2;
+                popTable(); };
 				 
 	//|comando { $$ = $1; };
 
@@ -232,7 +232,7 @@ comando: var_local { $$ = $1; } //DONE
        | func_call { $$ = $1; validateFunction($$);}
        | shift { $$ = $1; validateShift($$); }
        | retorno { $$ = $1;}//TODO
-       | bloco { $$ = $1; };//TODO push/pop
+       | abreEscopo bloco { $$ = $2; };//TODO push/pop
 
 var_local: static_opcional const_opcional tipo variavel { $$ = $4;
 								addType($$, $3); 
@@ -265,25 +265,25 @@ fluxo: if {$$ = $1;}
      | for {$$ = $1;}
      | while_do {$$ = $1;};
 
-if: TK_PR_IF '(' expressao ')' bloco else_opcional { $$ = createNode($1, NONE);
+if: TK_PR_IF '(' expressao ')' abreEscopo bloco else_opcional { $$ = createNode($1, NONE);
 								addChild($$, $3);
-								addChild($$, $5);
 								addChild($$, $6);
+								addChild($$, $7);
                 ifElseCode($$); };
-else_opcional: TK_PR_ELSE bloco { $$ = createNode($1, NONE);
-								addChild($$, $2);}
+else_opcional: TK_PR_ELSE abreEscopo bloco { $$ = createNode($1, NONE);
+								addChild($$, $3);}
              | %empty{ $$ = createNode(NULL, NONE);};
 
-for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' bloco { $$ = createNode($1, NONE);
+for: TK_PR_FOR '(' atrib ':' expressao ':' atrib ')' abreEscopo bloco { $$ = createNode($1, NONE);
 								addChild($$, $3);
 								addChild($$, $5);
 								addChild($$, $7);
-								addChild($$, $9);
+								addChild($$, $10);
                 forCode($$); };
 
-while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO bloco { $$ = createNode($1, NONE);
+while_do: TK_PR_WHILE '(' expressao ')' TK_PR_DO abreEscopo bloco { $$ = createNode($1, NONE);
 								addChild($$, $3);
-								addChild($$, $6);
+								addChild($$, $7);
                 whileCode($$); };
 
 comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);

@@ -99,6 +99,9 @@ void deleteTables() {
 
 void pushTable() {
 
+	if (scopeDefined == FALSE) {
+		defineScope();
+	}
     SymbolTable *new = createTable();
 
     new->nextTable = currentScope;
@@ -123,6 +126,7 @@ void freeParam(Param *parametro) {
 }
 
 void popTable() {
+	SymbolTable* aux;
     if (currentScope->elements != NULL) {
         for (int i = 0; i < HASH_SIZE; i++) {
             Symbol *elm = currentScope->elements[i];
@@ -141,8 +145,9 @@ void popTable() {
 			}
             currentScope->elements[i] = NULL;
         }
-
+		aux = currentScope;
         currentScope = currentScope->nextTable;
+		free(aux);
     }
 }
 
