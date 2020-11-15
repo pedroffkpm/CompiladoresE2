@@ -112,7 +112,9 @@ void freeParam(Param *parametro) {
     if (parametro == NULL) {
         return;
     }
-	freeParam(parametro->next);
+	if (parametro->next != NULL) {
+		freeParam(parametro->next);
+	}
     if (parametro->name != NULL) {
         free(parametro->name);
     }
@@ -125,9 +127,8 @@ void popTable() {
         for (int i = 0; i < HASH_SIZE; i++) {
             Symbol *elm = currentScope->elements[i];
 			if (elm != NULL) {
-            	for (int j = 0; j < elm->n_params; j++) {
-                	freeParam(elm->params);
-            	}
+            	
+                freeParam(elm->params);
 
             	free(elm->key);
             	elm->key = NULL;

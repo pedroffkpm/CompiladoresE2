@@ -43,18 +43,20 @@ int addIdsToTable(idList* ids, Type type) {
 			free(ids);
 			next = next->next; //REVER
 		}
-		//ERRO
+		printSimpleError(ERR_DECLARED, ids->token->lineNumber, ids->token->value.str);
+		exit(ERR_DECLARED)	;
 	}
 	return 0;
 }
 
 void addFuncToTable(struct lexval* token, Type type, Param* param) {
 	scopeType = type;
-	Symbol* s = getSymbolOnTable(token->value.str);
+	Symbol* s = getSymbol(token->value.str);
     	if (s == NULL) {
 		addSymbol(FUNCTION, type, 1, param, token);
 	} else {
-	//ERRO
+		printSimpleError(ERR_DECLARED, token->lineNumber, token->value.str);
+		exit(ERR_DECLARED);
 	}
 	return;
 }
@@ -75,7 +77,8 @@ void addNodeToTable(Node* node, Type type, Nature nature, int size) {
 			if(node->kidsNumber > 0)
 				addNodeToTable(node->kids[node->kidsNumber-1], type, nature, size);
 		} else {
-			//ERRO
+			printSimpleError(ERR_DECLARED, node->token->lineNumber, node->token->value.str);
+			exit(ERR_DECLARED);
 		}
 	}
 }

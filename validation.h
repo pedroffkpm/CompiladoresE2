@@ -12,6 +12,8 @@ void validateAttribution(Node *node);
 idList* createId(struct lexval *token1, struct lexval *token2, struct idList* next);
 int addIdsToTable(idList* ids, Type type);
 
+void printSimpleError(int errorcode, int lineNumber, char* name);
+
 void addFuncToTable(struct lexval* token, Type type, Param* param);
 
 void addNextId(struct idList* current,struct idList* next);
