@@ -213,6 +213,7 @@ void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexv
     free(key);
 
     currentScope->elements[index]->line = valor_lexico->lineNumber;
+    currentScope->elements[index]->label = -1;
     currentScope->elements[index]->nature = nature;
     currentScope->elements[index]->params = params;
 	currentScope->elements[index]->n_params = getParamNumber(params);
@@ -282,6 +283,16 @@ Symbol* getSymbolOnTable(char *key) {
     }
 
 	return symbol;
+}
+
+void void setFuncLabel(char* key, int label) {
+    Symbol* aux = getSymbol(key);
+
+    if(aux != NULL) {
+        aux->label = label;
+    }
+
+    aux = NULL; //não aponta mais pra nada
 }
 
 bool isSymbolInTable(Symbol* symbol, SymbolTable* table) {

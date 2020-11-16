@@ -326,14 +326,14 @@ void functionCallCode(Node* node) { //args (kids[0]) pode ser null
   addInstToList(i2i(rsp_copy, RSP), node->instructions); //restora RSP (aqui está o valor de retorno)
 
   /* DESCOBRE LABEL DA FUNCAO */
+  Symbol* s = getSymbol(node->token->value.str);
+  //não trato caso de não achar o símbolo na tabela; devia ser pego antes
 
-  addInstToList(jumpI());
-
+  addInstToList(jumpI(s->label), node->instructions);
 
   node->regTemp = getRegister();
   addInstToList(loadAI(RSP, 0, node->regTemp), node->instructions);
   //copia valor de retorno p/ node->regTemp
-
 
 }
 
@@ -342,26 +342,46 @@ void varLocalCode(Node* node) {
   addInstToList(addI(RSP, inferSizeForType(node->varType, 1), RSP), node->instructions);
 }
 
-void callArgListCode(Node* node) {
-  Node* aux = node->kids[0];
+void callArgListCode(Node *node) {
+  if (node->kidsNumber > 0) {
 
-  while (aux != NULL) {
-    node->instructions = concatLists(node->instructions, aux->instructions);
-    //código do argumento da chamada
-    addInstToList(storeAI(aux->regTemp, RSP, 0), node->instructions);
-    //guarda resultado em RSP+0
-    addInstToList(addI(RSP, 4, RSP), node->instructions);
-    //avança RSP 4 posições
-    aux = aux->kids[0];
+    Node *aux = node->kids[node->kidsNumber - 1];
+
+    while (aux != NULL) {
+      node->instructions = concatLists(node->instructions, aux->instructions);
+      //código do argumento da chamada
+      addInstToList(storeAI(aux->regTemp, RSP, 0), node->instructions);
+      //guarda resultado em RSP+0
+      addInstToList(addI(RSP, 4, RSP), node->instructions);
+      //avança RSP 4 posições
+
+      if (aux->kidsNumber > 0) {
+        aux = aux->kids[aux->kidsNumber - 1];
+      }
+      else {
+        aux = NULL;
+      }
+    }
+
+    aux = NULL;
   }
-
-  aux = NULL;
 }
 
-void blockCode(Node* node) {
-  for (int i = 0; i < node->kidsNumber-2; i++) //ultimo é NULL
-  {
-    node->instructions = concatLists(node->instructions, node->kids[i]->instructions);
+void blockCode(Node *node) {
+
+  if (node->kidsNumber > 0) {
+
+    Node *aux = node->kids[node->kidsNumber - 1];
+
+    while (aux != NULL) {
+      node->instructions = concatLists(node->instructions, aux->instructions);
+      if (aux->kidsNumber > 0) {
+        aux = aux->kids[aux->kidsNumber - 1];
+      }
+      else {
+        aux = NULL;
+      }
+    }
   }
 }
 
