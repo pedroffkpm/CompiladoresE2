@@ -92,4 +92,6 @@ int getScopeForKey(char *key);
 
 int getScope(SymbolTable* table);
 
+void setFuncLabel(char* key, int label);
+
 #endif

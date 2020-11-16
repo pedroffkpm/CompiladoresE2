@@ -300,9 +300,62 @@ void forCode(Node* node) {
 
 }
 
+void functionDeclarationCode(Node* node) {
+  if(strcmp(node->token->value.str, "main") == 0) {
+    node->label = 0; //especial pra main
+
+  }
+}
+
+void functionCallCode(Node* node) { //args (kids[0]) pode ser null
+  int rsp_copy = getRegister();
+  int return_address = getRegister();
+
+  addInstToList(i2i(RSP, rsp_copy), node->instructions); //rsp original
+  addInstToList(addI(RSP, 4, RSP), node->instructions); //aqui (rsp antes de add 4) vem o valor de retorno
+  node->instructions = concatLists(node->instructions, node->kids[0]->instructions);
+  //codigo de todos os args COLOCADOS EM RSP (topo da pilha)
+
+  addInstToList(addI(RPC, 4, return_address), node->instructions); //rpc+4 (depois do jump)
+  //endereço pra prox. instrucao; retornar depois do jump
+  //addI + store + i2i + jump
+
+  addInstToList(storeAI(return_address, RSP, 0), node->instructions);
+  //guarda endereço de retorno no topo da pilha
+
+  addInstToList(i2i(rsp_copy, RSP), node->instructions); //restora RSP (aqui está o valor de retorno)
+
+  /* DESCOBRE LABEL DA FUNCAO */
+
+  addInstToList(jumpI());
+
+
+  node->regTemp = getRegister();
+  addInstToList(loadAI(RSP, 0, node->regTemp), node->instructions);
+  //copia valor de retorno p/ node->regTemp
+
+
+}
+
 void varLocalCode(Node* node) {
 
   addInstToList(addI(RSP, inferSizeForType(node->varType, 1), RSP), node->instructions);
+}
+
+void callArgListCode(Node* node) {
+  Node* aux = node->kids[0];
+
+  while (aux != NULL) {
+    node->instructions = concatLists(node->instructions, aux->instructions);
+    //código do argumento da chamada
+    addInstToList(storeAI(aux->regTemp, RSP, 0), node->instructions);
+    //guarda resultado em RSP+0
+    addInstToList(addI(RSP, 4, RSP), node->instructions);
+    //avança RSP 4 posições
+    aux = aux->kids[0];
+  }
+
+  aux = NULL;
 }
 
 void blockCode(Node* node) {
