@@ -32,7 +32,7 @@ void whileCode(Node* node);
 
 void forCode(Node* node);
 
-void listCode(Node* node);
+void callArgListCode(Node* node);
 
 void blockCode(Node* node);
 
