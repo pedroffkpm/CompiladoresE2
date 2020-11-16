@@ -32,6 +32,10 @@ void whileCode(Node* node);
 
 void forCode(Node* node);
 
+void functionDeclarationCode(Node* node);
+
+void functionCallCode(Node* node);
+
 void callArgListCode(Node* node);
 
 void blockCode(Node* node);

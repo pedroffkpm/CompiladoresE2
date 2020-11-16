@@ -1,6 +1,7 @@
 #include "iloc.h"
 
 
+int return_label;
 //#################################
 
 void intCode(Node* node) {
@@ -303,8 +304,49 @@ void forCode(Node* node) {
 void functionDeclarationCode(Node* node) {
   if(strcmp(node->token->value.str, "main") == 0) {
     node->label = 0; //especial pra main
+    addInstToList(lbl(node->label), node->instructions);
+    node->instructions = concatLists(node->instructions, node->kids[0]->instructions);
+  } else {
+    Symbol* s = getSymbol(node->token->value.str);
+    node->label = getLabel();
+    addInstToList(lbl(node->label), node->instructions);
+    int rfp_copy = getRegister();
 
+    addInstToList(i2i(RFP, rfp_copy), node->instructions); //salva rfp original
+    addInstToList(i2i(RSP, RFP), node->instructions); //atualiza rfp
+    addInstToList(storeAI(rfp_copy, RFP, 8 + (s->n_params * 4)), node->instructions);
+    //salva valor original de rfp em rfp + 8 + tamanho dos params
+
+    int reg = getRegister();
+    addInstToList(loadI(0, reg), node->instructions);
+    addInstToList(storeAI(reg, RFP, 12 + (s->n_params * 4)), node->instructions);
+
+    addInstToList(addI(RSP, 16 + (s->n_params * 4), RSP), node->instructions);
+
+    node->instructions = concatLists(node->instructions, node->kids[0]->instructions);
+    return_label = getLabel();
+    addInstToList(lbl(return_label), node->instructions);
+
+    int return_addr = getRegister();
+    addInstToList(loadAI(RFP, 4 + (s->n_params * 4), return_addr), node->instructions);
+
+    int old_rfp = getRegister();
+    addInstToList(loadAI(RFP, 8 + (s->n_params * 4), old_rfp), node->instructions);
+
+    addInstToList(i2i(old_rfp, RFP), node->instructions);
+    addInstToList(i2i(RFP, RSP), node->instructions);
+    addInstToList(jump(return_addr), node->instructions);
   }
+
+  setFuncLabel(node->token->value.str, node->label); //adiciona label na tabela
+}
+
+void returnCode(Node* node) {
+  if(node->kidsNumber > 0) {
+    node->instructions = concatLists(node->instructions, node->kids[0]->instructions);
+    addInstToList(storeAI(node->kids[0]->regTemp, RFP, 0), node->instructions);
+  }
+  addInstToList(jumpI(return_label), node->instructions);
 }
 
 void functionCallCode(Node* node) { //args (kids[0]) pode ser null

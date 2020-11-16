@@ -203,7 +203,7 @@ funcao_global: static_opcional tipo TK_IDENTIFICADOR '(' params_list_global ')' 
 								addType($$, $2);
 								addChild($$, $8); 
 								addFuncToTable($3, $2, $5);
-								//geraCODIGO
+								functionDeclarationCode($$);
 
                 } ;
 
@@ -324,8 +324,9 @@ shift: id_expr TK_OC_SR TK_LIT_INT { $$ = createNode($2, NONE);
 retorno: TK_PR_RETURN expressao { $$ = createNode($1, NONE);
 								addType($$, $2->varType); 
 								addChild($$, $2);
-								validateReturn($$); }
-	|TK_PR_RETURN { $$ = createNode($1, NONE); validateReturn($$);  }
+								validateReturn($$); 
+								returnCode($$); }
+	|TK_PR_RETURN { $$ = createNode($1, NONE); validateReturn($$); returnCode($$); }
        	| TK_PR_BREAK { $$ = createNode($1, NONE); }
        	| TK_PR_CONTINUE { $$ = createNode($1, NONE); } ;
 
