@@ -36,6 +36,8 @@ void functionDeclarationCode(Node* node);
 
 void functionCallCode(Node* node);
 
+void returnCode(Node* node);
+
 void callArgListCode(Node* node);
 
 void blockCode(Node* node);
