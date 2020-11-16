@@ -298,7 +298,7 @@ comando_es: TK_PR_INPUT TK_IDENTIFICADOR { $$ = createNode($1, NONE);
 								validateOutput($$);};
 
 func_call: TK_IDENTIFICADOR '(' args_list ')' { $$ = createNode($1, FUNCTION);
-								addChild($$, $3); //geraCODIGO};
+								addChild($$, $3); /*geraCODIGO*/};
 
 args_list: id_or_exp_list { $$ = $1; callArgListCode($$); }
          | %empty { $$ = createNode(NULL, NONE);} ;
