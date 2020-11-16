@@ -285,7 +285,7 @@ Symbol* getSymbolOnTable(char *key) {
 	return symbol;
 }
 
-void void setFuncLabel(char* key, int label) {
+void setFuncLabel(char* key, int label) {
     Symbol* aux = getSymbol(key);
 
     if(aux != NULL) {
