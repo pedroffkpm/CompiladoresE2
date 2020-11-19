@@ -123,12 +123,12 @@ int removeNullNode(Node* node) {
 		nullC = removeNullNode(node->kids[i]);
 		if (nullC == 0) nullNode = 0;
 	}
-	for (i = 0; i < removedNodes; ++i) {
+	/*for (i = 0; i < removedNodes; ++i) {
 		free(node->kids[(node->kidsNumber-1)-i]->tl);
 		free(node->kids[(node->kidsNumber-1)-i]->fl);
 		free(node->kids[(node->kidsNumber-1)-i]->token);
 		free(node->kids[(node->kidsNumber-1)-i]);
-	}
+	}*/
 	node->kidsNumber = node->kidsNumber - removedNodes;
 	node->kids = (Node**)realloc(node->kids, node->kidsNumber*sizeof(Node**));
 	return nullNode;
