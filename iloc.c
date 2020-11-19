@@ -436,7 +436,7 @@ void iloc_init(Node* node) {
   addInstToList(jumpI(0), list); //main é L0
 
   node->instructions = concatLists(list, node->instructions); //bota essas insts no inicio do programa
-  freeList(list);
+ 	list = NULL;
 
   addInstToList(halt(), node->instructions); //adiciona halt no final
 }
@@ -474,6 +474,8 @@ void printCode(InstructionList* list) {
 
 void printInstruction(Instruction *instruction)
 {
+	if(instruction == NULL)
+		return;
   switch (instruction->op_code)
   {
   case LBL:

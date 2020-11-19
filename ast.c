@@ -124,7 +124,6 @@ int removeNullNode(Node* node) {
 		if (nullC == 0) nullNode = 0;
 	}
 	for (i = 0; i < removedNodes; ++i) {
-		printf("\nFreedNodes\n");
 		free(node->kids[(node->kidsNumber-1)-i]->tl);
 		free(node->kids[(node->kidsNumber-1)-i]->fl);
 		free(node->kids[(node->kidsNumber-1)-i]->token);
@@ -161,12 +160,13 @@ Node* createNode(struct lexval *token, int tokenType) {
 	return node;
 }
 
+
 Node* createDanglingNode(struct lexval* token) {
 	Node* node = malloc(sizeof(Node));
 	node->token = token;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
-  node->instructions = createList();
+  node->instructions = NULL;
   node->regTemp = -5;
   node->label = -1;
 
@@ -224,8 +224,9 @@ void freeDanglingParser(Node* node) {
 			free(node->token);
       free(node->tl);
       free(node->fl);
-      freeList(node->instructions);
 		}
+		
+      	freeList(node->instructions);
 		free(node);
 	}
 }
@@ -322,9 +323,9 @@ void freeDanglingScanner(Node* node) {
 					free(node->token->value.str);
 				}
 				free(node->token);
-        		free(node->tl);
-        		free(node->fl);
-        		freeList(node->instructions);
+        		//free(node->tl);
+        		//free(node->fl);
+        		//freeList(node->instructions);
 			}
 		}
 		free(node);
@@ -394,7 +395,7 @@ void libera(void* voidNode) {
 				free(node->token);
     		free(node->tl);
     		free(node->fl);
-    		//freeList(node->instructions);
+    		freeList(node->instructions);
 		free(node);	
 	} else {
 		

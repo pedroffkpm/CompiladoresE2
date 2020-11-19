@@ -16,9 +16,10 @@ void validateProgram(void *arvore);
 int main (int argc, char **argv)
 {
   int ret = yyparse(); 
-  exporta(arvore); //essa chamada vai ser comentada!
-  // iloc_init(arvore); //arvore precisa virar do tipo Node*
-  // printCode(arvore.instructions); //arvore precisa ser Node* e precisa ser a raiz
+  //exporta(arvore); //essa chamada vai ser comentada!
+  iloc_init(arvore); //arvore precisa virar do tipo Node*
+	Node* tree = (Node*)arvore;
+  printCode(tree->instructions); //arvore precisa ser Node* e precisa ser a raiz
   libera(arvore);
   arvore = NULL;
   yylex_destroy();

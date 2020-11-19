@@ -67,12 +67,12 @@ InstructionList* createList() {
 
 void freeList(InstructionList* list) {
   for(int i=0; i<list->inst_num; i++) {
-    free(list->instructions[i]);
+  	if(list->instructions[i] != NULL)
+    	free(list->instructions[i]);
     list->instructions[i] = NULL;
   }
 
   free(list);
-  list = NULL;
 
 }
 
