@@ -290,7 +290,6 @@ void validateFunction(Node* node) {
 			exit(ERR_EXCESS_ARGS);
 		}
 		validateFunctionArgs(node->kids[0], s->params);
-		
 	}
 	return;
 }
