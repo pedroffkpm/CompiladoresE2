@@ -284,7 +284,13 @@ void validateFunction(Node* node) {
 		printSimpleError(ERR_VECTOR, node->token->lineNumber, node->token->value.str);
         exit(ERR_VECTOR);		
 	}
-	validateFunctionArgs(node->kids[0], s->params);
+	if(node->kidsNumber > 1) {
+		if(s->params == NULL) {
+			printSimpleError(ERR_EXCESS_ARGS, node->token->lineNumber, node->token->value.str);
+			exit(ERR_EXCESS_ARGS);
+		}
+		validateFunctionArgs(node->kids[0], s->params);
+	}
 	return;
 }
 /*
