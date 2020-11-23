@@ -6,7 +6,6 @@
 #include "ast.h"
 #include "table.h"
 
-
 //code
 void loadVarToRegCode(Node* node);
 
@@ -21,10 +20,6 @@ void arithmeticCode(Node* node);
 void booleanCode(Node* node);
 
 void logicCode(Node* node);
-
-void remendaTrue(Node* node, int newLabel);
-
-void remendaFalse(Node* node, int newLabel);
 
 void ifElseCode(Node* node);
 
@@ -52,8 +47,19 @@ void varLocalCode(Node* node);
 
 //print
 
+void remendaTrue(Node* node, int newLabel);
+
+void remendaFalse(Node* node, int newLabel);
+
+void remendaReturn(Node* node);
+
+// void concatInstructions(Node* dst, Node* src, bool toStart);
+// void addInstToNode(Instruction* inst, Node* node, bool toStart);
+
+// void freeInstructions(Node* node);
+
 char* special_register(Register nmr);
-void printCode(InstructionList* list);
-void printInstruction(Instruction* instruction);
+void printCode(Node* node);
+void printInstruction(Instruction instruction);
 
 #endif

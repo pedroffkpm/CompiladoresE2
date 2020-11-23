@@ -49,7 +49,7 @@ Node* removeNullHead(Node* node) {
 		free(node->token);
     	free(node->tl);
     	free(node->fl);
-    	freeList(node->instructions);
+    	// freeList(node->instructions);
 		free(node);
 	} else {
 		if (node->token->tokenType == REMOVE) {
@@ -60,14 +60,14 @@ Node* removeNullHead(Node* node) {
 				free(node->kids[i]->token);
       			free(node->kids[i]->tl);
       			free(node->kids[i]->fl);
-      			freeList(node->kids[i]->instructions);
+      			// freeList(node->kids[i]->instructions);
       //free instructions? mas se é NULL?
 				free(node->kids[i]);
 			}	
 			free(node->token);
       		free(node->tl);
       		free(node->fl);
-      		freeList(node->instructions);
+      		// freeList(node->instructions);
       //free instructions? mas se é NULL?
 			free(node);
 		} else {
@@ -146,14 +146,16 @@ Node* createNode(struct lexval *token, int tokenType) {
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
 	node->kids[0] = NULL;
-  node->instructions = createList();
-  node->regTemp = -5; //ILOC.H -> -4 a -1 são reservados (RFP, RSP, RBSS, RPC)
-  node->label = -1; // getLabel() gera a partir de 0
-  node->trueNmr = 0;
-  node->tl = NULL;
 
-  node->falseNmr = 0;
-  node->fl = NULL;
+	node->inst_head = NULL;
+	// node->instructions[0] = NULL;
+  	node->regTemp = -5; //ILOC.H -> -4 a -1 são reservados (RFP, RSP, RBSS, RPC)
+  	node->label = -1; // getLabel() gera a partir de 0
+  	node->trueNmr = 0;
+  	node->tl = NULL;
+
+  	node->falseNmr = 0;
+  	node->fl = NULL;
 
 	if(tokenType != NONE)
 		node->token->tokenType = tokenType;
@@ -166,14 +168,14 @@ Node* createDanglingNode(struct lexval* token) {
 	node->token = token;
 	node->kidsNumber = 0;
 	node->kids = (Node**)malloc(sizeof(Node**));
-  node->instructions = NULL;
-  node->regTemp = -5;
-  node->label = -1;
+  	node->inst_head = NULL;
+  	node->regTemp = -5;
+  	node->label = -1;
 
-  node->trueNmr = 0;
-  node->tl = NULL;
-  node->falseNmr = 0;
-  node->fl = NULL;
+  	node->trueNmr = 0;
+  	node->tl = NULL;
+  	node->falseNmr = 0;
+  	node->fl = NULL;
 
 	return node;
 }
@@ -226,7 +228,7 @@ void freeDanglingParser(Node* node) {
       free(node->fl);
 		}
 		
-      	freeList(node->instructions);
+      	// freeList(node->instructions);
 		free(node);
 	}
 }
@@ -393,9 +395,21 @@ void libera(void* voidNode) {
 		}
 			if(node->token != NULL)
 				free(node->token);
-    		free(node->tl);
-    		free(node->fl);
-    		freeList(node->instructions);
+
+		for(int j = 0; j < node->trueNmr; j++) {
+			free(node->tl[j]);
+		}
+
+		for(int k = 0; k < node->falseNmr; k++) {
+			free(node->fl);
+		}
+
+		freeList(&(node->inst_head));
+    	
+    	// if(node->inst_num == 0) {
+		// 	free(node->instructions); //free se não tem instruc, pq se tiver vão ser free'd na raiz
+		// }
+
 		free(node);	
 	} else {
 		

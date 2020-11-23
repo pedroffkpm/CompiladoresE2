@@ -61,3 +61,5 @@ lex.yy.h
 etapa3
 etapa4
 *.icloud
+.DS_Store
+etapa5

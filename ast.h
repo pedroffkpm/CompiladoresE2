@@ -21,7 +21,7 @@ typedef struct node{
   int falseNmr;
   int* fl;
 
-  InstructionList* instructions;
+  IList* inst_head;
 
 } Node;
 
