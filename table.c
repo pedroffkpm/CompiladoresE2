@@ -106,7 +106,6 @@ void pushTable() {
 
     currentScope = new;
 
-    new = NULL;
 }
 
 void freeParam(Param *parametro) {
@@ -202,6 +201,11 @@ void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexv
     char* key = makeKey(keysize, nature, valor_lexico);
     int index = hashFunction(key);
 
+    if(currentScope == NULL) {
+        printf("Shouldnt be\n");
+        printf("\n%d\n", scopeDefined);
+    }
+
     while(currentScope->elements[index] != NULL) {
         ++index;
         index %= HASH_SIZE; 
@@ -211,6 +215,7 @@ void addSymbol(Nature nature, Type type, int vecSize, Param *params, struct lexv
     currentScope->elements[index]->key = (char*) malloc(sizeof(char) * keysize);
     snprintf(currentScope->elements[index]->key, keysize, "%s", key);
     free(key);
+    key = NULL;
 
     currentScope->elements[index]->line = valor_lexico->lineNumber;
     currentScope->elements[index]->label = -1;

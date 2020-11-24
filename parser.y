@@ -178,7 +178,7 @@ programa:
 
 componentes: 
 	declaracao { $$ = $1; }
-        | declaracao componentes { $$ = $1; addChild($$, $2); };
+        | declaracao componentes { $$ = $1; addChild($$, $2); componenteCode($$, $2); };
 
 declaracao: 
 	var_global { $$ = $1;}

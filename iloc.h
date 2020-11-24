@@ -45,13 +45,15 @@ void iloc_init(Node* node);
 
 void varLocalCode(Node* node);
 
+void componenteCode(Node* pai, Node* filho);
+
 //print
 
 void remendaTrue(Node* node, int newLabel);
 
 void remendaFalse(Node* node, int newLabel);
 
-void remendaReturn(Node* node);
+void remendaReturn(IList* aux);
 
 // void concatInstructions(Node* dst, Node* src, bool toStart);
 // void addInstToNode(Instruction* inst, Node* node, bool toStart);

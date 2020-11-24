@@ -208,9 +208,7 @@ void configLexValueNonLiteral(int tokenType) {
 	yylval.valor_lexico->tokenType = tokenType;
 	yylval.valor_lexico->literalType = NONE;
 	yylval.valor_lexico->tokenInAst = FALSE;
-	if(tokenType != KEYWORD) {
-		yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
-	}
+	yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
 	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
 }
 

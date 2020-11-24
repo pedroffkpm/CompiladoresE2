@@ -1,7 +1,7 @@
 #include "iloc.h"
 
 
-int return_label;
+int return_label = -1;
 bool has_main = false;
 //#################################
 
@@ -377,6 +377,8 @@ void forCode(Node* node) {
 }
 
 void functionDeclarationCode(Node* node) {
+  Symbol* s = getSymbol(node->token->value.str);
+
   if(strcmp(node->token->value.str, "main") == 0) {
     has_main = true;
     node->label = 0; //especial pra main
@@ -386,8 +388,23 @@ void functionDeclarationCode(Node* node) {
     concatInstructions(&(node->inst_head), &(node->kids[0]->inst_head));
     // concatInstructions(node, node->kids[0], false);
     // node->instructions = concatLists(node->instructions, node->kids[0]->instructions);
+
+    //RETURN SEQUENCE
+    IList *aux;
+    getNodeByOp(node->inst_head, RETJUMP, &(aux));
+
+    while(aux != NULL) { //tem return
+      if(aux->inst.arg1 < 0) { //nunca foi trocado
+        remendaReturn(aux);
+        insertTailInstruction(lbl(return_label), &(node->inst_head));
+        return_label = -1;
+        aux = NULL;
+        
+      } else {
+        getNodeByOp(aux, RETJUMP, &(aux));
+      }
+    }
   } else {
-    Symbol* s = getSymbol(node->token->value.str);
     node->label = getLabel();
     insertTailInstruction(lbl(node->label), &(node->inst_head));
     // addInstToNode(lbl(node->label), node, false);
@@ -417,35 +434,30 @@ void functionDeclarationCode(Node* node) {
     // addInstToNode(addI(RSP, 16 + (s->n_params * 4), RSP), node, false);
     // addInstToList(addI(RSP, 16 + (s->n_params * 4), RSP), node->instructions);
 
-    return_label = getLabel();
-    //precisa setar a label de retorno antes de pegar as insts (onde pode ter um return)
     concatInstructions(&(node->inst_head), &(node->kids[0]->inst_head));
-    // concatInstructions(node, node->kids[0], false); //pega insts do bloco
-    remendaReturn(node); //troca a label pra return_label
-    // node->instructions = concatLists(node->instructions, node->kids[0]->instructions);
-    insertTailInstruction(lbl(return_label), &(node->inst_head));
-    // addInstToNode(lbl(return_label), node, false);
-    // addInstToList(lbl(return_label), node->instructions);
 
-    int return_addr = getRegister();
-    insertTailInstruction(loadAI(RFP, 4 + (s->n_params * 4), return_addr), &(node->inst_head));
-    // addInstToNode(loadAI(RFP, 4 + (s->n_params * 4), return_addr), node, false);
-    // addInstToList(loadAI(RFP, 4 + (s->n_params * 4), return_addr), node->instructions);
+    //RETURN SEQUENCE
+    IList *aux;
+    getNodeByOp(node->inst_head, RETJUMP, &(aux));
 
-    int old_rfp = getRegister();
-    insertTailInstruction(loadAI(RFP, 8 + (s->n_params * 4), old_rfp), &(node->inst_head));
-    // addInstToNode(loadAI(RFP, 8 + (s->n_params * 4), old_rfp), node, false);
-    // addInstToList(loadAI(RFP, 8 + (s->n_params * 4), old_rfp), node->instructions);
+    while(aux != NULL) { //tem return
+      if(aux->inst.arg1 < 0) { //nunca foi trocado
+        remendaReturn(aux);
+        insertTailInstruction(lbl(return_label), &(node->inst_head));
+        return_label = -1;
+        int return_addr = getRegister();
+        insertTailInstruction(loadAI(RFP, 4 + (s->n_params * 4), return_addr), &(node->inst_head));
+        int old_rfp = getRegister();
+        insertTailInstruction(loadAI(RFP, 8 + (s->n_params * 4), old_rfp), &(node->inst_head));
+        insertTailInstruction(i2i(old_rfp, RFP), &(node->inst_head));
+        insertTailInstruction(i2i(RFP, RSP), &(node->inst_head));
+        insertTailInstruction(jump(return_addr), &(node->inst_head));
 
-    insertTailInstruction(i2i(old_rfp, RFP), &(node->inst_head));
-    // addInstToNode(i2i(old_rfp, RFP), node, false);
-    // addInstToList(i2i(old_rfp, RFP), node->instructions);
-    insertTailInstruction(i2i(RFP, RSP), &(node->inst_head));
-    // addInstToNode(i2i(RFP, RSP), node, false);
-    // addInstToList(i2i(RFP, RSP), node->instructions);
-    insertTailInstruction(jump(return_addr), &(node->inst_head));
-    // addInstToNode(jump(return_addr), node, false);
-    // addInstToList(jump(return_addr), node->instructions);
+        aux = NULL;
+      } else {
+        getNodeByOp(aux, RETJUMP, &(aux));
+      }
+    }
   }
 
   setFuncLabel(node->token->value.str, node->label); //adiciona label na tabela
@@ -572,6 +584,10 @@ void blockCode(Node *node) {
   }
 }
 
+void componenteCode(Node* pai, Node* filho) {
+  concatInstructions(&(pai->inst_head), &(filho->inst_head));
+}
+
 void iloc_init(Node* node) {
   if(node != NULL) {
   // addInstToList(loadI(1024, RFP), list);
@@ -593,13 +609,9 @@ void iloc_init(Node* node) {
 
 //###########################
 
-void remendaReturn(Node* node) {
-
-  IList *aux;
-
-  getNodeByOp(node->inst_head, RETJUMP, &aux);
-
-  if(aux) {
+void remendaReturn(IList *aux) {
+  if(aux != NULL) {
+    return_label = getLabel();
     aux->inst.arg1 = return_label;
   }
 }

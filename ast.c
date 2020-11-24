@@ -24,6 +24,10 @@ void checkTree(void* voidNode) {
 	// while(fullPass == 0) {
 	// 	fullPass = removeNullNode(node);
 	// }
+	// for (int i = 1; i < node->kidsNumber; i++) {
+	// 	concatInstructions(&(node->inst_head), &(node->kids[i]->inst_head));
+	// }
+	
 	return;
 }
 

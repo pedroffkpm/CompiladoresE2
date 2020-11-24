@@ -52,7 +52,7 @@ int addIdsToTable(idList* ids, Type type) {
 void addFuncToTable(struct lexval* token, Type type, Param* param) {
 	scopeType = type;
 	Symbol* s = getSymbol(token->value.str);
-    	if (s == NULL) {
+    if (s == NULL) {
 		addSymbol(FUNCTION, type, 1, param, token);
 	} else {
 		printSimpleError(ERR_DECLARED, token->lineNumber, token->value.str);
@@ -368,7 +368,7 @@ void validateReturn(Node *node) {
 		t = node->kids[0]->varType;
 	}
 	if(t == scopeType) {
-		popTable();
+		// popTable();
 		return;
 	}
 	printTypeError(ERR_WRONG_PAR_RETURN, node->token->lineNumber, t, node->varType, node->token->value.str);
