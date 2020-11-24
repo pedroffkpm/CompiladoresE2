@@ -62,6 +62,7 @@ typedef enum {
 } Nature;
 
 typedef enum {
+	ERR_TYPE = -1,
     INT_TYPE,
     FLOAT_TYPE,
     CHAR_TYPE,

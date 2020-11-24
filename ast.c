@@ -21,9 +21,9 @@ void freeDanglingParser(Node* node);
 void checkTree(void* voidNode) {
 	Node* node = (Node*)voidNode;
 	int fullPass = 0;
-	while(fullPass == 0) {
-		fullPass = removeNullNode(node);
-	}
+	// while(fullPass == 0) {
+	// 	fullPass = removeNullNode(node);
+	// }
 	return;
 }
 
@@ -49,7 +49,7 @@ Node* removeNullHead(Node* node) {
 		free(node->token);
     	free(node->tl);
     	free(node->fl);
-    	// freeList(node->instructions);
+    	freeList(&(node->inst_head));
 		free(node);
 	} else {
 		if (node->token->tokenType == REMOVE) {
@@ -60,14 +60,14 @@ Node* removeNullHead(Node* node) {
 				free(node->kids[i]->token);
       			free(node->kids[i]->tl);
       			free(node->kids[i]->fl);
-      			// freeList(node->kids[i]->instructions);
+      			freeList(&(node->kids[i]->inst_head));
       //free instructions? mas se é NULL?
 				free(node->kids[i]);
 			}	
 			free(node->token);
       		free(node->tl);
       		free(node->fl);
-      		// freeList(node->instructions);
+      		freeList(&(node->inst_head));
       //free instructions? mas se é NULL?
 			free(node);
 		} else {
@@ -140,11 +140,11 @@ Node* createNode(struct lexval *token, int tokenType) {
 	} //else {
 		//token->tokenInAst = FALSE;
 	//}
-	Node* node = 	malloc(sizeof(Node));
+	Node* node = malloc(sizeof(Node));
 	node->token = token;
 	node->varType = -1;
 	node->kidsNumber = 0;
-	node->kids = (Node**)malloc(sizeof(Node**));
+	node->kids = (Node**) malloc(sizeof(Node*));
 	node->kids[0] = NULL;
 
 	node->inst_head = NULL;
@@ -206,8 +206,14 @@ void addNature(Node *node, Nature nature) {
 
 void addChild(Node* father, Node* child) {
 	father->kidsNumber++;
-	father->kids = (Node**)realloc(father->kids, father->kidsNumber*sizeof(Node**));
-	father->kids[father->kidsNumber-1] = child;
+	
+	Node **tmp = (Node**)realloc(father->kids, father->kidsNumber*sizeof(Node*));
+	if(tmp != NULL) {
+		father->kids = tmp;
+		father->kids[father->kidsNumber-1] = child;
+	} else {
+		printf("\nREALLOC ERROR\n");
+	}
 }
 
 void freeDanglingParser(Node* node) {
@@ -220,12 +226,13 @@ void freeDanglingParser(Node* node) {
 		}
 		free(node->kids);
 		if(node->token != NULL) {
-			if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING)) {
-				free(node->token->value.str);			
+			if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && (node->token->literalType == STRING || node->token->literalType == CHAR))) {
+				free((char*) node->token->value.str);
 			}
 			free(node->token);
       free(node->tl);
       free(node->fl);
+	  freeList(&(node->inst_head));
 		}
 		
       	// freeList(node->instructions);
@@ -240,24 +247,24 @@ void printTokenLabel(Node* node);
 void freeDanglingScanner(Node* node);
 */
 
-void printTree(Node* node) {
-	int i = 0;
-	if(node != NULL) {
-		while(i < node->kidsNumber) {
-			if(node->kids[i]->token != NULL) {
-				//if(node->kids[i]->token->tokenInAst) {
-				printf("%p, %p\n", node, node->kids[i]);
-				//}
-			}		
-			i++;
-		}
-	}
-	i = 0;
-	while(i < node->kidsNumber) {
-		printTree(node->kids[i]);		
-		i++;
-	}
-}
+// void printTree(Node* node) {
+// 	int i = 0;
+// 	if(node != NULL) {
+// 		while(i < node->kidsNumber) {
+// 			if(node->kids[i]->token != NULL) {
+// 				//if(node->kids[i]->token->tokenInAst) {
+// 				printf("%p, %p\n", node, node->kids[i]);
+// 				//}
+// 			}		
+// 			i++;
+// 		}
+// 	}
+// 	i = 0;
+// 	while(i < node->kidsNumber) {
+// 		printTree(node->kids[i]);		
+// 		i++;
+// 	}
+// }
 
 void printTokenLabel(Node* node) {
 	int tokenType = node->token->tokenType;
@@ -321,13 +328,13 @@ void freeDanglingScanner(Node* node) {
 		free(node->kids);
 		if(node->token != NULL) {
 			if(node->token->tokenInAst == FALSE) {
-				if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING)) {
-					free(node->token->value.str);
+				if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && (node->token->literalType == STRING || node->token->literalType == CHAR))) {
+					free((char*) node->token->value.str);
 				}
 				free(node->token);
-        		//free(node->tl);
-        		//free(node->fl);
-        		//freeList(node->instructions);
+        		free(node->tl);
+        		free(node->fl);
+        		freeList(&(node->inst_head));
 			}
 		}
 		free(node);
@@ -354,8 +361,48 @@ void exporta(void *voidNode);
 void libera(void* voidNode);
 */
 
+// void exporta(void* voidNode) {
+// 	Node* node = (Node*)voidNode;
+// 	int i = 0;
+// 	if(parsingSucceded == FALSE)
+// 		return;
+// 	if(!treePrinted) {
+// 		treePrinted = TRUE;
+// 		printTree(node);
+// 	}
+
+// 	if(node != NULL) {
+// 		if(node->token != NULL) {
+// 			printTokenLabel(node);
+// 		}
+// 		while(i < node->kidsNumber) {
+// 		exporta(node->kids[i]);		
+// 		++i;
+// 		}
+// 	}
+// }
+
+void printTree(Node* node) {
+	int i = 0;
+	if(node != NULL) {
+		while(i < node->kidsNumber) {
+				//if(node->kids[i]->token->tokenInAst) {
+			printf("%p, %p\n", node, node->kids[i]);
+				//}
+	
+			i++;
+		}
+	}
+	i = 0;
+	while(i < node->kidsNumber) {
+		printTree(node->kids[i]);		
+		i++;
+	}
+}
+
 void exporta(void* voidNode) {
 	Node* node = (Node*)voidNode;
+	printf("\nF: %d\n", node->kidsNumber);
 	int i = 0;
 	if(parsingSucceded == FALSE)
 		return;
@@ -390,19 +437,14 @@ void libera(void* voidNode) {
 		}
 		free(node->kids);
 		if(node->token != NULL) {
-			if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && node->token->literalType == STRING))
-				free(node->token->value.str);		
+			if(node->token->tokenType == KEYWORD || node->token->tokenType == COMP_OPER || node->token->tokenType == IDS || (node->token->tokenType == LITERAL && (node->token->literalType == STRING || node->token->literalType == CHAR)))
+				free((char*) node->token->value.str);		
 		}
 			if(node->token != NULL)
 				free(node->token);
 
-		for(int j = 0; j < node->trueNmr; j++) {
-			free(node->tl[j]);
-		}
-
-		for(int k = 0; k < node->falseNmr; k++) {
-			free(node->fl);
-		}
+		free(node->tl);
+		free(node->fl);
 
 		freeList(&(node->inst_head));
     	

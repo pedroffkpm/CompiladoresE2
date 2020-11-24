@@ -4,6 +4,7 @@
 #include "ast.h" //puxa a bib <stdbool.h> -> permite usar o tipo bool e false/true
 #include "parser.tab.h"
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 
@@ -207,7 +208,9 @@ void configLexValueNonLiteral(int tokenType) {
 	yylval.valor_lexico->tokenType = tokenType;
 	yylval.valor_lexico->literalType = NONE;
 	yylval.valor_lexico->tokenInAst = FALSE;
-	yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
+	if(tokenType != KEYWORD) {
+		yylval.valor_lexico->value.str = strdup(yytext); //usa str pois o valor retornado por strdup também é uma cadeia de caracteres
+	}
 	addChild(danglingNodes, createDanglingNode(yylval.valor_lexico));
 }
 

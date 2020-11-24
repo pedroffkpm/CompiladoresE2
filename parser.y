@@ -136,14 +136,24 @@ extern Node *danglingNodes;
 %type <ast> operador_ternario
 %type <type> tipo
 
-%destructor {} <valor_lexico>
+%destructor {
+	if($$->tokenType == KEYWORD 
+	|| $$->tokenType == COMP_OPER 
+	|| $$->tokenType == IDS 
+	|| ($$->tokenType == LITERAL && $$->literalType == STRING)) {
+		free($$->value.str);
+	}
+	free($$);
+	$$=NULL;
+	} <valor_lexico>
+
 %destructor {
 	if(parsingSucceded == FALSE){
 		freeDanglingParser($$);
 	}
 } <ast>
 
-
+%destructor { freeParam($$); } <param>
 
 
 /* precedencia da menor pra maior */
@@ -225,7 +235,7 @@ bloco: '{' comando_list '}' { $$ = $2;
 	//|comando { $$ = $1; };
 
 comando_list: comando ';' comando_list { $$ = $1; 
-								addChild($$, $3);}
+								addChild($$, $3); }
         | %empty { $$ = createNode(NULL, NONE); } ;
 
 comando: var_local { $$ = $1; } //DONE

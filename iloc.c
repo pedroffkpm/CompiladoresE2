@@ -573,10 +573,10 @@ void blockCode(Node *node) {
 }
 
 void iloc_init(Node* node) {
+  if(node != NULL) {
   // addInstToList(loadI(1024, RFP), list);
   // addInstToList(loadI(1024, RSP), list);
   // addInstToList(loadI(0, RBSS), list);
-  printf("\nhas_main: %d\n", has_main);
   if(has_main) {
     insertHeadInstruction(jumpI(0), &(node->inst_head));
     // addInstToNode(jumpI(0), node, true); //main é L0; adiciona no topo
@@ -588,6 +588,7 @@ void iloc_init(Node* node) {
   insertTailInstruction(halt(), &(node->inst_head));
   // addInstToNode(halt(), node, false); //adiciona halt no final
   // addInstToList(halt(), node->instructions); //adiciona halt no final
+  }
 }
 
 //###########################
@@ -676,11 +677,14 @@ char* special_register(Register nmr) {
 
 void printCode(Node* node) {
 
+  if(node != NULL) {
+
   IList *aux = node->inst_head;
 
   while (aux) {
     printInstruction(aux->inst);
     aux = aux->next;
+  }
   }
 }
 
